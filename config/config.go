@@ -1,9 +1,12 @@
 package config
 
 import (
+	"bytes"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 
@@ -35,6 +38,9 @@ const (
 	DefaultConfigFile = "config"
 	// EnvDir is the environment variable used to change the path root.
 	EnvDir = "STORETHEINDEX_PATH"
+
+	// configEnvVar is the environment variable used to provide a full config in JSON format.
+	configEnvVar = "STORETHEINDEX_CONFIG"
 
 	Version = 2
 )
@@ -89,23 +95,35 @@ func PathRoot() (string, error) {
 // Load reads the json-serialized config at the specified path.
 func Load(filePath string) (*Config, error) {
 	var err error
-	if filePath == "" {
-		filePath, err = Path("", "")
-	} else {
-		filePath, err = fsutil.ExpandHome(filePath)
-	}
-	if err != nil {
-		return nil, err
-	}
+	var cfgReader io.Reader
 
-	f, err := os.Open(filePath)
-	if err != nil {
-		if os.IsNotExist(err) {
-			err = ErrNotInitialized
+	// give priority to env variable
+	cfgStr := os.Getenv(configEnvVar)
+	if cfgStr != "" {
+		cfgBytes, err := base64.StdEncoding.DecodeString(cfgStr)
+		if err != nil {
+			return nil, err
 		}
-		return nil, err
+
+		cfgReader = bytes.NewReader(cfgBytes)
+	} else {
+		if filePath == "" {
+			filePath, err = Path("", "")
+		} else {
+			filePath, err = fsutil.ExpandHome(filePath)
+		}
+		if err != nil {
+			return nil, err
+		}
+
+		cfgReader, err = os.Open(filePath)
+		if err != nil {
+			if os.IsNotExist(err) {
+				err = ErrNotInitialized
+			}
+			return nil, err
+		}
 	}
-	defer f.Close()
 
 	// Populate with initial values in case they are not present in config.
 	cfg := Config{
@@ -121,7 +139,7 @@ func Load(filePath string) (*Config, error) {
 		Peering:        NewPeering(),
 	}
 
-	if err = json.NewDecoder(f).Decode(&cfg); err != nil {
+	if err = json.NewDecoder(cfgReader).Decode(&cfg); err != nil {
 		return nil, err
 	}
 

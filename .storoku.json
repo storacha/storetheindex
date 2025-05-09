@@ -13,5 +13,5 @@
   "buckets": null,
   "secrets": null,
   "tables": null,
-  "writeToContainer": false
+  "writeToContainer": true
 }
