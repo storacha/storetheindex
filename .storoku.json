@@ -1,6 +1,6 @@
 {
   "app": "ipni",
-  "privateKeyEnvVar": "",
+  "privateKeyEnvVar": "STORETHEINDEX_PRIV_KEY",
   "didEnvVar": "",
   "port": 3000,
   "js": null,
