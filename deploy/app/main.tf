@@ -40,12 +40,14 @@ provider "aws" {
 
 
 module "app" {
-  source = "github.com/storacha/storoku//app?ref=v0.2.13"
+  source = "github.com/storacha/storoku//app?ref=v0.2.14"
   private_key = var.private_key
+  httpport = 3000
   principal_mapping = var.principal_mapping
   did = var.did
   app = var.app
   appState = var.app
+  write_to_container = false
   environment = terraform.workspace
   # if there are any env vars you want available only to your container
   # in the vpc as opposed to set in the dockerfile, enter them here

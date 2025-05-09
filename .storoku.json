@@ -2,7 +2,7 @@
   "app": "ipni",
   "privateKeyEnvVar": "",
   "didEnvVar": "",
-  "port": 0,
+  "port": 3000,
   "js": null,
   "domainBase": "",
   "cloudflare": true,
@@ -12,5 +12,6 @@
   "queues": null,
   "buckets": null,
   "secrets": null,
-  "tables": null
+  "tables": null,
+  "writeToContainer": false
 }
