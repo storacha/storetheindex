@@ -116,13 +116,16 @@ func Load(filePath string) (*Config, error) {
 			return nil, err
 		}
 
-		cfgReader, err = os.Open(filePath)
+		f, err := os.Open(filePath)
 		if err != nil {
 			if os.IsNotExist(err) {
 				err = ErrNotInitialized
 			}
 			return nil, err
 		}
+		defer f.Close()
+
+		cfgReader = f
 	}
 
 	// Populate with initial values in case they are not present in config.
