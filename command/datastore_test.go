@@ -14,34 +14,49 @@ import (
 )
 
 func TestCreateDatastore(t *testing.T) {
-	tmpDir := t.TempDir()
-	dsDir := filepath.Join(tmpDir, "testDataDir")
-	_, _, err := createDatastore(context.Background(), dsDir, "unknown", false)
-	require.Error(t, err)
+	t.Run("unknown datastore type", func(t *testing.T) {
+		_, _, err := createDatastore(context.Background(), "some/dir", "unknown", "some-region", false)
+		require.Error(t, err)
+	})
 
-	ds, path, err := createDatastore(context.Background(), dsDir, "levelds", false)
-	require.NoError(t, err)
-	require.NotNil(t, ds)
-	require.Equal(t, dsDir, path)
-	require.NoError(t, ds.Close())
+	t.Run("levelds", func(t *testing.T) {
+		tmpDir := t.TempDir()
+		dsDir := filepath.Join(tmpDir, "testDataDir")
 
-	checkFile := filepath.Join(dsDir, "check.test")
-	err = os.WriteFile(checkFile, []byte("Hello"), 0666)
-	require.NoError(t, err)
+		ds, path, err := createDatastore(context.Background(), dsDir, "levelds", "", false)
+		require.NoError(t, err)
+		require.NotNil(t, ds)
+		require.Equal(t, dsDir, path)
+		require.NoError(t, ds.Close())
 
-	// Check that ds directory is not removed.
-	ds, _, err = createDatastore(context.Background(), dsDir, "levelds", false)
-	require.NoError(t, err)
-	require.NotNil(t, ds)
-	require.NoError(t, ds.Close())
-	require.True(t, fileExists(checkFile))
+		checkFile := filepath.Join(dsDir, "check.test")
+		err = os.WriteFile(checkFile, []byte("Hello"), 0666)
+		require.NoError(t, err)
 
-	// Check that ds directory is removed.
-	ds, _, err = createDatastore(context.Background(), dsDir, "levelds", true)
-	require.NoError(t, err)
-	require.NotNil(t, ds)
-	require.NoError(t, ds.Close())
-	require.False(t, fileExists(checkFile))
+		// Check that ds directory is not removed.
+		ds, _, err = createDatastore(context.Background(), dsDir, "levelds", "", false)
+		require.NoError(t, err)
+		require.NotNil(t, ds)
+		require.NoError(t, ds.Close())
+		require.True(t, fileExists(checkFile))
+
+		// Check that ds directory is removed.
+		ds, _, err = createDatastore(context.Background(), dsDir, "levelds", "", true)
+		require.NoError(t, err)
+		require.NotNil(t, ds)
+		require.NoError(t, ds.Close())
+		require.False(t, fileExists(checkFile))
+	})
+
+	t.Run("dynamodb", func(t *testing.T) {
+		tableName := "some-table"
+		region := "some-region"
+
+		ds, _, err := createDatastore(context.Background(), tableName, "dynamodb", region, false)
+		require.NoError(t, err)
+		require.NotNil(t, ds)
+		require.NoError(t, ds.Close())
+	})
 }
 
 func TestDeletePrefix(t *testing.T) {
@@ -50,7 +65,8 @@ func TestDeletePrefix(t *testing.T) {
 
 	tmpDir := t.TempDir()
 	dsDir := filepath.Join(tmpDir, "testDataDir")
-	ds, _, err := createDatastore(ctx, dsDir, "levelds", false)
+	region := "some-region"
+	ds, _, err := createDatastore(ctx, dsDir, "levelds", region, false)
 	require.NoError(t, err)
 	t.Cleanup(func() {
 		ds.Close()
