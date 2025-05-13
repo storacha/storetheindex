@@ -65,7 +65,7 @@ func createDynamoDBDatastore(ctx context.Context, tableName, tableRegion string)
 		Region: aws.String(tableRegion),
 	}))
 	c := dynamodb.New(s)
-	ds := dynamods.New(c, tableName)
+	ds := dynamods.New(c, tableName, dynamods.WithPartitionkey("Key"))
 
 	return ds, tableName, nil
 }
