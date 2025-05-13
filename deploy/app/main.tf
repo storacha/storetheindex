@@ -40,7 +40,7 @@ provider "aws" {
 
 
 module "app" {
-  source = "github.com/storacha/storoku//app?ref=v0.2.14"
+  source = "github.com/storacha/storoku//app?ref=v0.2.20"
   private_key = var.private_key
   private_key_env_var = "STORETHEINDEX_PRIV_KEY"
   httpport = 3000
@@ -58,7 +58,8 @@ module "app" {
   create_db = false
   # enter secret values your app will use here -- these will be available
   # as env vars in the container at runtime
-  secrets = {   }
+  secrets = { 
+  }
   # enter any sqs queues you want to create here
   queues = []
   caches = [  ]

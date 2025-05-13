@@ -23,7 +23,7 @@ eval_image_tag:
 
 get_env_file = ENV_FILE = $$(abspath .env.production.local)
 
-.PHONE: eval_env_file
+.PHONY: eval_env_file
 eval_env_file: .env.production.local
 	$(eval $(get_env_file))
 
@@ -62,7 +62,7 @@ clean-shared:
 clean: clean-terraform clean-shared
 
 app/.terraform:
-	tofu -chdir=app init -backend-config="key=storacha/$(TF_VAR_app)/terraform.tfstate"
+	TF_WORKSPACE=default tofu -chdir=app init -backend-config="key=storacha/$(TF_VAR_app)/terraform.tfstate"
 
 shared/.terraform:
 	TF_WORKSPACE=default tofu -chdir=shared init -backend-config="key=storacha/$(TF_VAR_app)/shared.tfstate"
@@ -147,5 +147,5 @@ console: app/.terraform .tfworkspace eval_image_tag eval_env_file
 
 .PHONY: wait-deploy
 wait-deploy:
-	aws deploy wait deployment-successful --deployment-id $(shell aws deploy list-deployments --deployment-group-name $(TF_WORKSPACE)-$(TF_VAR_app)-code-deploy-deployment-group --application-name $(TF_WORKSPACE)-$(TF_VAR_app)-code-deploy-app --query "deployments[0]" --output text)
+	aws deploy wait deployment-successful --region $(TF_VAR_region) --deployment-id $(shell aws deploy list-deployments --region $(TF_VAR_region) --deployment-group-name $(TF_WORKSPACE)-$(TF_VAR_app)-code-deploy-deployment-group --application-name $(TF_WORKSPACE)-$(TF_VAR_app)-code-deploy-app --query "deployments[0]" --output text)
 
