@@ -391,7 +391,7 @@ func daemonAction(cctx *cli.Context) error {
 	if cfgPath != "" {
 		modTime, _, statErr = fsutil.FileChanged(cfgPath, modTime)
 		if statErr != nil {
-			log.Error(err)
+			log.Error(statErr)
 		}
 		ticker = time.NewTicker(time.Duration(cfg.Indexer.ConfigCheckInterval))
 		timeChan = ticker.C

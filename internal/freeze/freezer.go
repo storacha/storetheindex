@@ -50,15 +50,9 @@ type Freezer struct {
 
 // New creates a new Freezer that checks the usage of the file system at dirPath.
 func New(dirPaths []string, freezeAtPercent float64, dstore datastore.Datastore, freezeFunc func() error) (*Freezer, error) {
-	dirPaths, err := uniqFsDirs(dirPaths)
-	if err != nil {
-		return nil, err
-	}
-
 	f := &Freezer{
 		dstore: dstore,
 		frozen: make(chan struct{}),
-		paths:  dirPaths,
 	}
 
 	if freezeAtPercent < 0 {
@@ -71,6 +65,12 @@ func New(dirPaths []string, freezeAtPercent float64, dstore datastore.Datastore,
 		f.freezeAt = freezeAtPercent
 		f.freezeFunc = freezeFunc
 		f.freezeAtStr = fmt.Sprintf("%s%%", strconv.FormatFloat(freezeAtPercent, 'f', -1, 64))
+
+		dirPaths, err := uniqFsDirs(dirPaths)
+		if err != nil {
+			return nil, err
+		}
+		f.paths = dirPaths
 
 		log.Infow("freezing enabled", "freezeAt", f.freezeAtStr)
 	}

@@ -58,7 +58,8 @@
     "ConfigCheckInterval": "30s",
     "ShutdownTimeout": "15m",
     "ValueStoreDir": "/home/nonroot/valuestore",
-    "ValueStoreType": "pebble"
+    "ValueStoreType": "pebble",
+    "FreezeAtPercent": -1
   },
   "Ingest": {
     "AdvertisementDepthLimit": 33554432,
