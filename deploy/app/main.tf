@@ -69,21 +69,22 @@ module "app" {
       name = "datastore"
       attributes = [
         {
-          name = "Key"
+          name = "DSKey"
           type = "S"
         },
       ]
-      hash_key = "Key"
+      hash_key = "DSKey"
     },
+  
     {
       name = "tmp-datastore"
       attributes = [
         {
-          name = "Key"
+          name = "DSKey"
           type = "S"
         },
       ]
-      hash_key = "Key"
+      hash_key = "DSKey"
     },
   ]
   buckets = []

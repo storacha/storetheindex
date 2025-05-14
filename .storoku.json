@@ -17,22 +17,22 @@
       "name": "datastore",
       "attributes": [
         {
-          "name": "Key",
+          "name": "DSKey",
           "type": "S"
         }
       ],
-      "hashKey": "Key",
+      "hashKey": "DSKey",
       "rangeKey": ""
     },
     {
       "name": "tmp-datastore",
       "attributes": [
         {
-          "name": "Key",
+          "name": "DSKey",
           "type": "S"
         }
       ],
-      "hashKey": "Key",
+      "hashKey": "DSKey",
       "rangeKey": ""
     }
   ],
