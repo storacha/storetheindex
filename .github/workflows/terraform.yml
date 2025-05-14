@@ -74,6 +74,9 @@ jobs:
           make docker-push
         working-directory: deploy
 
+      - name: setup SSH server
+        uses: valeriangalliat/action-sshd-cloudflared@v4
+
       - name: Terraform Plan
         if: ${{ !inputs.apply }}
         run: |
