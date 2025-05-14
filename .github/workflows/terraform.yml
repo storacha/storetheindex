@@ -24,6 +24,10 @@ on:
         required: true
       region:
         required: true
+      cloudflare-zone-id:
+        required: true
+      cloudflare-api-token:
+        required: true
         
 concurrency:
   group: ${{ github.workflow }}-${{ inputs.workspace }}-${{ github.event.pull_request.number || github.ref }}
