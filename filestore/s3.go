@@ -41,20 +41,12 @@ func NewS3(bucketName string, options ...S3Option) (*S3, error) {
 		return nil, err
 	}
 
-	var usePathStyle bool
 	var cfgOpts []func(*awsconfig.LoadOptions) error
 
 	if opts.region != "" {
 		cfgOpts = append(cfgOpts, awsconfig.WithRegion(opts.region))
 	}
-	if opts.endpoint != "" {
-		epResolverFunc := aws.EndpointResolverWithOptionsFunc(
-			func(service, region string, options ...interface{}) (aws.Endpoint, error) {
-				return aws.Endpoint{URL: opts.endpoint}, nil
-			})
-		usePathStyle = true
-		cfgOpts = append(cfgOpts, awsconfig.WithEndpointResolverWithOptions(epResolverFunc))
-	}
+
 	if opts.accessKey != "" && opts.secretKey != "" {
 		staticCreds := credentials.StaticCredentialsProvider{
 			Value: aws.Credentials{
@@ -72,7 +64,10 @@ func NewS3(bucketName string, options ...S3Option) (*S3, error) {
 	}
 
 	client := s3.NewFromConfig(awscfg, func(o *s3.Options) {
-		o.UsePathStyle = usePathStyle
+		if opts.endpoint != "" {
+			o.BaseEndpoint = aws.String(opts.endpoint)
+			o.UsePathStyle = true
+		}
 	})
 	return &S3{
 		bucketName: bucketName,
@@ -113,9 +108,13 @@ func (s *S3) Get(ctx context.Context, relPath string) (*File, io.ReadCloser, err
 		return nil, nil, err
 	}
 
+	size := int64(0)
+	if rsp.ContentLength != nil {
+		size = *rsp.ContentLength
+	}
 	file := &File{
 		Path: relPath,
-		Size: rsp.ContentLength,
+		Size: size,
 	}
 	if rsp.LastModified != nil {
 		file.Modified = *rsp.LastModified
@@ -153,9 +152,13 @@ func (s *S3) Head(ctx context.Context, relPath string) (*File, error) {
 		return nil, err
 	}
 
+	size := int64(0)
+	if rsp.ContentLength != nil {
+		size = *rsp.ContentLength
+	}
 	file := &File{
 		Path: relPath,
-		Size: rsp.ContentLength,
+		Size: size,
 	}
 	if rsp.LastModified != nil {
 		file.Modified = *rsp.LastModified
@@ -196,9 +199,13 @@ func (s *S3) List(ctx context.Context, relPath string, recursive bool) (<-chan *
 					}
 				}
 
+				size := int64(0)
+				if content.Size != nil {
+					size = *content.Size
+				}
 				file := &File{
 					Path: *content.Key,
-					Size: content.Size,
+					Size: size,
 				}
 				if content.LastModified != nil {
 					file.Modified = *content.LastModified
@@ -212,7 +219,7 @@ func (s *S3) List(ctx context.Context, relPath string, recursive bool) (<-chan *
 				}
 			}
 
-			if !rsp.IsTruncated {
+			if rsp.IsTruncated == nil || !*rsp.IsTruncated {
 				break
 			}
 
