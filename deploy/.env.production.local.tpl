@@ -1,4 +1,10 @@
 <%
+if [ "$TF_WORKSPACE" != "prod" ]; then
+  TABLE_PREFIX="${TF_WORKSPACE}-${TF_VAR_app}"
+else
+  TABLE_PREFIX="${TF_VAR_app}"
+fi
+
 ! IFS='' read -r -d '' Config <<EOC
 {
   "Version": 2,
@@ -32,10 +38,10 @@
   },
   "Datastore": {
     "Type": "dynamodb",
-    "Dir": "${TF_WORKSPACE}-${TF_VAR_app}-datastore",
+    "Dir": "${TABLE_PREFIX}-datastore",
     "Region": "$TF_VAR_region",
     "TmpType": "dynamodb",
-    "TmpDir": "${TF_WORKSPACE}-${TF_VAR_app}-tmp-datastore",
+    "TmpDir": "${TABLE_PREFIX}-tmp-datastore",
     "TmpRegion": "$TF_VAR_region"
   },
   "Discovery": {
@@ -57,8 +63,10 @@
     "CacheSize": -1,
     "ConfigCheckInterval": "30s",
     "ShutdownTimeout": "15m",
-    "ValueStoreDir": "/home/nonroot/valuestore",
-    "ValueStoreType": "pebble",
+    "ValueStoreType": "dynamodb",
+    "DynamoDBRegion": "$TF_VAR_region",
+    "DynamoDBProvidersTable": "${TABLE_PREFIX}-providers",
+    "DynamoDBMultihashMapTable": "${TABLE_PREFIX}-multihash-map",
     "FreezeAtPercent": -1
   },
   "Ingest": {
