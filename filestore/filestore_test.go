@@ -52,6 +52,7 @@ func TestS3(t *testing.T) {
 	defer func() { _ = gnomock.Stop(localS3) }()
 
 	fileStore, err := filestore.NewS3(bucketName,
+		filestore.WithRegion("some-region"),
 		filestore.WithEndpoint(fmt.Sprintf("http://%s/", localS3.Address(localstack.APIPort))),
 		filestore.WithKeys("abcd1234", "1qaz2wsx"))
 	require.NoError(t, err)
