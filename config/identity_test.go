@@ -26,16 +26,33 @@ func TestIdentity_Decode(t *testing.T) {
 	require.NoError(t, err)
 
 	tests := []struct {
-		name        string
-		givenConfig config.Identity
-		givenEnvVar string
-		wantPeerID  peer.ID
-		wantPrivKey crypto.PrivKey
-		wantErr     string
+		name         string
+		givenConfig  config.Identity
+		givenEnvVars map[string]string
+		wantPeerID   peer.ID
+		wantPrivKey  crypto.PrivKey
+		wantErr      string
 	}{
 		{
 			name:    "Empty config and env var is error",
-			wantErr: "could not decode private key: private key not specified; it must be specified either in config or via STORETHEINDEX_PRIV_KEY_PATH env var",
+			wantErr: "could not decode private key: private key not specified; it must be specified either in config or via STORETHEINDEX_PRIV_KEY or STORETHEINDEX_PRIV_KEY_PATH env vars",
+		},
+		{
+			name: "Private key can be read from env var",
+			givenEnvVars: map[string]string{
+				"STORETHEINDEX_PRIV_KEY": testB64PrivKey,
+			},
+			wantPeerID:  testPeerID,
+			wantPrivKey: testPrivKey,
+		},
+		{
+			name: "Private key from env var takes precedence over private key path from env var",
+			givenEnvVars: map[string]string{
+				"STORETHEINDEX_PRIV_KEY_PATH": "non-existing-file",
+				"STORETHEINDEX_PRIV_KEY":      testB64PrivKey,
+			},
+			wantPeerID:  testPeerID,
+			wantPrivKey: testPrivKey,
 		},
 		{
 			name: "Invalid private key in config is error",
@@ -53,9 +70,11 @@ func TestIdentity_Decode(t *testing.T) {
 			wantErr: "could not decode peer id: failed to parse peer ID:",
 		},
 		{
-			name:        "Invalid path via env var is error",
-			givenEnvVar: "non-existing-file",
-			wantErr:     "could not decode private key: open non-existing-file",
+			name: "Invalid path via env var is error",
+			givenEnvVars: map[string]string{
+				"STORETHEINDEX_PRIV_KEY_PATH": "non-existing-file",
+			},
+			wantErr: "could not decode private key: open non-existing-file",
 		},
 		{
 			name: "Mismatching peer ID in config is error",
@@ -79,7 +98,9 @@ func TestIdentity_Decode(t *testing.T) {
 			givenConfig: config.Identity{
 				PeerID: testPeerID.String(),
 			},
-			givenEnvVar: testPrivKeyPath,
+			givenEnvVars: map[string]string{
+				"STORETHEINDEX_PRIV_KEY_PATH": testPrivKeyPath,
+			},
 			wantPeerID:  testPeerID,
 			wantPrivKey: testPrivKey,
 		},
@@ -88,15 +109,17 @@ func TestIdentity_Decode(t *testing.T) {
 			givenConfig: config.Identity{
 				PeerID: "12D3KooWP5UZNGnCPsCoCgxbc9BRDVwwgFguZ7EaW6FEMHTzN2q7",
 			},
-			givenEnvVar: testPrivKeyPath,
-			wantErr:     "provided peer ID must either match the peer ID generated from private key or be omitted: expected 12D3KooWMnKm1H932NjBzETsTEFSeXpaPUiwCoCqQMrBc6sVnUeQ but got 12D3KooWP5UZNGnCPsCoCgxbc9BRDVwwgFguZ7EaW6FEMHTzN2q7",
+			givenEnvVars: map[string]string{
+				"STORETHEINDEX_PRIV_KEY_PATH": testPrivKeyPath,
+			},
+			wantErr: "provided peer ID must either match the peer ID generated from private key or be omitted: expected 12D3KooWMnKm1H932NjBzETsTEFSeXpaPUiwCoCqQMrBc6sVnUeQ but got 12D3KooWP5UZNGnCPsCoCgxbc9BRDVwwgFguZ7EaW6FEMHTzN2q7",
 		},
 	}
 	for _, tt := range tests {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
-			if tt.givenEnvVar != "" {
-				t.Setenv(config.PrivateKeyPathEnvVar, tt.givenEnvVar)
+			for k, v := range tt.givenEnvVars {
+				t.Setenv(k, v)
 			}
 			gotPeerID, gotPrivKey, err := tt.givenConfig.Decode()
 			if tt.wantErr != "" {

@@ -14,6 +14,7 @@ const (
 	PrivKeyTag      = "PrivKey"
 	PrivKeySelector = IdentityTag + "." + PrivKeyTag
 
+	PrivateKeyEnvVar     = "STORETHEINDEX_PRIV_KEY"
 	PrivateKeyPathEnvVar = "STORETHEINDEX_PRIV_KEY_PATH"
 )
 
@@ -61,9 +62,15 @@ func (i Identity) Decode() (peer.ID, ic.PrivKey, error) {
 func (i Identity) DecodePrivateKey(passphrase string) (ic.PrivKey, error) {
 	// TODO(security): currently storing key unencrypted. in the future we need to encrypt it.
 
-	// If a value is supplied in JSON config then attempt to decode it as the private key.
+	var privKeyStr string
+	// If a value is supplied in JSON config or env var, then attempt to decode it as the private key.
 	if i.PrivKey != "" {
-		pkb, err := base64.StdEncoding.DecodeString(i.PrivKey)
+		privKeyStr = i.PrivKey
+	} else {
+		privKeyStr = os.Getenv(PrivateKeyEnvVar)
+	}
+	if privKeyStr != "" {
+		pkb, err := base64.StdEncoding.DecodeString(privKeyStr)
 		if err != nil {
 			return nil, err
 		}
@@ -73,7 +80,7 @@ func (i Identity) DecodePrivateKey(passphrase string) (ic.PrivKey, error) {
 	// Otherwise, load the private key from path supplied via env var.
 	privKeyPath := os.Getenv(PrivateKeyPathEnvVar)
 	if privKeyPath == "" {
-		return nil, fmt.Errorf("private key not specified; it must be specified either in config or via %s env var", PrivateKeyPathEnvVar)
+		return nil, fmt.Errorf("private key not specified; it must be specified either in config or via %s or %s env vars", PrivateKeyEnvVar, PrivateKeyPathEnvVar)
 	}
 
 	pkb, err := os.ReadFile(privKeyPath)
