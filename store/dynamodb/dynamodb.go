@@ -16,15 +16,6 @@ import (
 
 var _ indexer.Interface = (*ddbStore)(nil)
 
-// DynamoDBClient defines the interface for DynamoDB operations we use
-type DynamoDBClient interface {
-	dynamodb.QueryAPIClient
-	dynamodb.BatchGetItemAPIClient
-	PutItem(ctx context.Context, params *dynamodb.PutItemInput, optFns ...func(*dynamodb.Options)) (*dynamodb.PutItemOutput, error)
-	BatchWriteItem(ctx context.Context, params *dynamodb.BatchWriteItemInput, optFns ...func(*dynamodb.Options)) (*dynamodb.BatchWriteItemOutput, error)
-	DeleteItem(ctx context.Context, params *dynamodb.DeleteItemInput, optFns ...func(*dynamodb.Options)) (*dynamodb.DeleteItemOutput, error)
-}
-
 // Schema field names
 const (
 	// Providers table fields
@@ -36,6 +27,21 @@ const (
 	fieldMultihash = "Multihash"
 	fieldValueKey  = "ValueKey"
 )
+
+// DynamoDBClient defines the interface for DynamoDB operations we use
+type DynamoDBClient interface {
+	dynamodb.QueryAPIClient
+	dynamodb.BatchGetItemAPIClient
+	PutItem(ctx context.Context, params *dynamodb.PutItemInput, optFns ...func(*dynamodb.Options)) (*dynamodb.PutItemOutput, error)
+	BatchWriteItem(ctx context.Context, params *dynamodb.BatchWriteItemInput, optFns ...func(*dynamodb.Options)) (*dynamodb.BatchWriteItemOutput, error)
+	DeleteItem(ctx context.Context, params *dynamodb.DeleteItemInput, optFns ...func(*dynamodb.Options)) (*dynamodb.DeleteItemOutput, error)
+}
+
+func NewClient(region string) DynamoDBClient {
+	return dynamodb.NewFromConfig(aws.Config{
+		Region: region,
+	})
+}
 
 type ddbStore struct {
 	client            DynamoDBClient
