@@ -33,7 +33,7 @@ provider "aws" {
 }
 
 module "shared" {
-  source = "github.com/storacha/storoku//shared?ref=v0.2.25"
+  source = "github.com/storacha/storoku//shared?ref=v0.2.26"
   create_db = false
   caches = [  ]
   app = var.app
