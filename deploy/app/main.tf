@@ -64,7 +64,29 @@ module "app" {
   queues = []
   caches = [  ]
   topics = [  ]
-  tables = []
+  tables = [
+    {
+      name = "datastore"
+      attributes = [
+        {
+          name = "DSKey"
+          type = "S"
+        },
+      ]
+      hash_key = "DSKey"
+    },
+  
+    {
+      name = "tmp-datastore"
+      attributes = [
+        {
+          name = "DSKey"
+          type = "S"
+        },
+      ]
+      hash_key = "DSKey"
+    },
+  ]
   buckets = []
   providers = {
     aws = aws
