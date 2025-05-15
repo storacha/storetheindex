@@ -34,6 +34,36 @@
       ],
       "hashKey": "DSKey",
       "rangeKey": ""
+    },
+    {
+      "name": "valuestore-providers",
+      "attributes": [
+        {
+          "name": "ProviderID",
+          "type": "S"
+        },
+        {
+          "name": "ContextID",
+          "type": "B"
+        }
+      ],
+      "hashKey": "ProviderID",
+      "rangeKey": "ContextID"
+    },
+    {
+      "name": "valuestore-multihash-map",
+      "attributes": [
+        {
+          "name": "Multihash",
+          "type": "B"
+        },
+        {
+          "name": "ValueKey",
+          "type": "S"
+        }
+      ],
+      "hashKey": "Multihash",
+      "rangeKey": "ValueKey"
     }
   ],
   "writeToContainer": true
