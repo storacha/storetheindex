@@ -57,6 +57,15 @@ type Indexer struct {
 	// format version. When set to -1 update the format to the latest supported
 	// version.
 	PebbleFormatMajorVersion int
+	// DynamoDBProvidersTable is the name of the table that stores provider
+	// records. Only applies when ValueStoreType is set to "dynamodb".
+	DynamoDBProvidersTable string
+	// DynamoDBMultihashMapTable is the name of the table that stores multihash
+	// mappings. Only applies when ValueStoreType is set to "dynamodb".
+	DynamoDBMultihashMapTable string
+	// DynamoDBRegion is the region where the DynamoDB tables are kept. Only
+	// applies when ValueStoreType is set to "dynamodb".
+	DynamoDBRegion string
 	// UnfreezeOnStart tells that indexer to unfreeze itself on startup if it
 	// is frozen. This reverts the indexer to the state it was in before it was
 	// frozen. It only retains the most recent provider and publisher
