@@ -29,7 +29,15 @@ const (
 	updateBatchSize = 500000
 )
 
-func createDatastore(ctx context.Context, dirOrTable, dsType, region string, rmExisting bool) (datastore.Batching, string, error) {
+func createDatastore(ctx context.Context, cfg config.Datastore) (datastore.Batching, string, error) {
+	return createDS(ctx, cfg.Type, cfg.Dir, cfg.Region, false)
+}
+
+func createTmpDatastore(ctx context.Context, cfg config.Datastore) (datastore.Batching, string, error) {
+	return createDS(ctx, cfg.Type, cfg.TmpDir, cfg.TmpRegion, cfg.RemoveTmpAtStart)
+}
+
+func createDS(ctx context.Context, dsType, dirOrTable, region string, rmExisting bool) (datastore.Batching, string, error) {
 	switch dsType {
 	case "levelds":
 		return createLevelDBDatastore(ctx, dirOrTable, rmExisting)

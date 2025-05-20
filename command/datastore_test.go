@@ -13,9 +13,9 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestCreateDatastore(t *testing.T) {
+func TestCreateDS(t *testing.T) {
 	t.Run("unknown datastore type", func(t *testing.T) {
-		_, _, err := createDatastore(context.Background(), "some/dir", "unknown", "some-region", false)
+		_, _, err := createDS(context.Background(), "unknown", "some/dir", "some-region", false)
 		require.Error(t, err)
 	})
 
@@ -23,7 +23,7 @@ func TestCreateDatastore(t *testing.T) {
 		tmpDir := t.TempDir()
 		dsDir := filepath.Join(tmpDir, "testDataDir")
 
-		ds, path, err := createDatastore(context.Background(), dsDir, "levelds", "", false)
+		ds, path, err := createDS(context.Background(), "levelds", dsDir, "", false)
 		require.NoError(t, err)
 		require.NotNil(t, ds)
 		require.Equal(t, dsDir, path)
@@ -34,14 +34,14 @@ func TestCreateDatastore(t *testing.T) {
 		require.NoError(t, err)
 
 		// Check that ds directory is not removed.
-		ds, _, err = createDatastore(context.Background(), dsDir, "levelds", "", false)
+		ds, _, err = createDS(context.Background(), "levelds", dsDir, "", false)
 		require.NoError(t, err)
 		require.NotNil(t, ds)
 		require.NoError(t, ds.Close())
 		require.True(t, fileExists(checkFile))
 
 		// Check that ds directory is removed.
-		ds, _, err = createDatastore(context.Background(), dsDir, "levelds", "", true)
+		ds, _, err = createDS(context.Background(), "levelds", dsDir, "", true)
 		require.NoError(t, err)
 		require.NotNil(t, ds)
 		require.NoError(t, ds.Close())
@@ -52,7 +52,7 @@ func TestCreateDatastore(t *testing.T) {
 		tableName := "some-table"
 		region := "some-region"
 
-		ds, _, err := createDatastore(context.Background(), tableName, "dynamodb", region, false)
+		ds, _, err := createDS(context.Background(), "dynamodb", tableName, region, false)
 		require.NoError(t, err)
 		require.NotNil(t, ds)
 		require.NoError(t, ds.Close())
@@ -65,8 +65,7 @@ func TestDeletePrefix(t *testing.T) {
 
 	tmpDir := t.TempDir()
 	dsDir := filepath.Join(tmpDir, "testDataDir")
-	region := "some-region"
-	ds, _, err := createDatastore(ctx, dsDir, "levelds", region, false)
+	ds, _, err := createDS(ctx, "levelds", dsDir, "", false)
 	require.NoError(t, err)
 	t.Cleanup(func() {
 		ds.Close()
