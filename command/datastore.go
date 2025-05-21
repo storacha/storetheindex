@@ -34,7 +34,11 @@ func createDatastore(ctx context.Context, cfg config.Datastore) (datastore.Batch
 }
 
 func createTmpDatastore(ctx context.Context, cfg config.Datastore) (datastore.Batching, string, error) {
-	return createDS(ctx, cfg.Type, cfg.TmpDir, cfg.TmpRegion, cfg.RemoveTmpAtStart)
+	if cfg.TmpType == "" || cfg.TmpType == "none" {
+		return nil, "", nil
+	}
+
+	return createDS(ctx, cfg.TmpType, cfg.TmpDir, cfg.TmpRegion, cfg.RemoveTmpAtStart)
 }
 
 func createDS(ctx context.Context, dsType, dirOrTable, region string, rmExisting bool) (datastore.Batching, string, error) {

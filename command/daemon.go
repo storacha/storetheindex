@@ -143,12 +143,16 @@ func daemonAction(cctx *cli.Context) error {
 	if err != nil {
 		return err
 	}
-	defer dsTmp.Close()
-	err = cleanupDTTempData(cctx.Context, dsTmp)
-	if err != nil {
-		return err
+
+	if dsTmp != nil {
+		defer dsTmp.Close()
+		err = cleanupDTTempData(cctx.Context, dsTmp)
+		if err != nil {
+			return err
+		}
+
+		freezeDirs = append(freezeDirs, dsTmpDir)
 	}
-	freezeDirs = append(freezeDirs, dsTmpDir)
 
 	if cfg.Indexer.UnfreezeOnStart {
 		unfrozen, err := registry.Unfreeze(cctx.Context, freezeDirs, cfg.Indexer.FreezeAtPercent, dstore)

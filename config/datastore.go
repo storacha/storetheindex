@@ -16,6 +16,8 @@ type Datastore struct {
 
 	// TmpType is the type of datastore for temporary persisted data.
 	// Currently, only "levelds" and "dynamodb" are supported.
+	// Use "none" to disable the tmp datastore. The tmp datastore is used by the ingest
+	// service, so it should also be disabled if the tmp datastore is disabled.
 	TmpType string
 	// TmpDir is the directory where the datastore for persisted temporary data
 	// is kept. This datastore contains temporary items such as synced
