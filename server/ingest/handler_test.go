@@ -56,6 +56,7 @@ func (m *mockIndexer) Flush() error                                       { retu
 func (m *mockIndexer) Close() error                                       { return nil }
 func (m *mockIndexer) Iter() (indexer.Iterator, error)                    { return nil, nil }
 func (m *mockIndexer) Stats() (*indexer.Stats, error)                     { return nil, indexer.ErrStatsNotSupported }
+func (m *mockIndexer) HasIndexedStore() bool                              { return false }
 
 func TestHandleRegisterProvider(t *testing.T) {
 	discoveryCfg := config.Discovery{

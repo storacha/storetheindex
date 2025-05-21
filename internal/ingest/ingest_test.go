@@ -22,7 +22,7 @@ import (
 	"github.com/ipld/go-ipld-prime/datamodel"
 	"github.com/ipld/go-ipld-prime/linking"
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
-	"github.com/ipni/go-indexer-core"
+	idxrcore "github.com/ipni/go-indexer-core"
 	"github.com/ipni/go-indexer-core/engine"
 	"github.com/ipni/go-indexer-core/store/memory"
 	"github.com/ipni/go-libipni/announce"
@@ -34,6 +34,7 @@ import (
 	"github.com/ipni/go-libipni/mautil"
 	"github.com/ipni/storetheindex/carstore"
 	"github.com/ipni/storetheindex/config"
+	"github.com/ipni/storetheindex/indexer"
 	"github.com/ipni/storetheindex/internal/registry"
 	"github.com/ipni/storetheindex/test/typehelpers"
 	"github.com/libp2p/go-libp2p"
@@ -706,19 +707,19 @@ func TestFreeze(t *testing.T) {
 }
 
 type coreWrap struct {
-	indexer.Interface
+	indexer.Indexer
 	mhs []multihash.Multihash
 }
 
-func (c *coreWrap) Put(value indexer.Value, mhs ...multihash.Multihash) error {
+func (c *coreWrap) Put(value idxrcore.Value, mhs ...multihash.Multihash) error {
 	c.mhs = append(c.mhs, mhs...)
-	return c.Interface.Put(value, mhs...)
+	return c.Indexer.Put(value, mhs...)
 }
 
 func TestRmWithNoEntries(t *testing.T) {
 	te := setupTestEnv(t, true)
 	cw := &coreWrap{
-		Interface: te.ingester.indexer,
+		Indexer: te.ingester.indexer,
 	}
 	te.ingester.indexer = cw
 
@@ -842,7 +843,7 @@ func TestSyncInternalError(t *testing.T) {
 	defer cancel()
 
 	errVS := newErrorValueStore()
-	ing.indexer = engine.New(errVS)
+	ing.indexer = indexer.New(engine.New(errVS), false)
 
 	// The explicit sync will happen concurrently with the sycn triggered by
 	// the published advertisement. These will be serialized in the dagsync
@@ -1308,7 +1309,7 @@ func TestRecursionDepthLimitsEntriesSync(t *testing.T) {
 	require.Equal(t, cid.Undef, nextChunkCid)
 }
 
-func requireNotIndexed(t *testing.T, ix indexer.Interface, p peer.ID, mhs []multihash.Multihash, msgAndArgs ...interface{}) {
+func requireNotIndexed(t *testing.T, ix indexer.Indexer, p peer.ID, mhs []multihash.Multihash, msgAndArgs ...interface{}) {
 	t.Helper()
 	for _, mh := range mhs {
 		vs, exists, err := ix.Get(mh)
@@ -1712,8 +1713,8 @@ func TestGetEntryDataFromCar(t *testing.T) {
 }
 
 // Make new indexer engine
-func mkIndexer(t *testing.T, withCache bool) *engine.Engine {
-	return engine.New(memory.New())
+func mkIndexer(t *testing.T, withCache bool) indexer.Indexer {
+	return indexer.New(engine.New(memory.New()), false)
 }
 
 func mkRegistry(t *testing.T) *registry.Registry {
@@ -1999,7 +2000,7 @@ func publishRemovalAd(t *testing.T, pub dagsync.Publisher, lsys ipld.LinkSystem,
 	return advLnk.(cidlink.Link).Cid
 }
 
-func checkAllIndexed(ix indexer.Interface, p peer.ID, mhs []multihash.Multihash) error {
+func checkAllIndexed(ix indexer.Indexer, p peer.ID, mhs []multihash.Multihash) error {
 	for _, mh := range mhs {
 		values, exists, err := ix.Get(mh)
 		if err != nil {
@@ -2022,7 +2023,7 @@ func checkAllIndexed(ix indexer.Interface, p peer.ID, mhs []multihash.Multihash)
 	return nil
 }
 
-func requireIndexedEventually(t *testing.T, ix indexer.Interface, p peer.ID, mhs []multihash.Multihash) {
+func requireIndexedEventually(t *testing.T, ix indexer.Indexer, p peer.ID, mhs []multihash.Multihash) {
 	t.Helper()
 	require.Eventually(t, func() bool {
 		return checkAllIndexed(ix, p, mhs) == nil
@@ -2110,15 +2111,15 @@ func newErrorValueStore() *errorValueStore {
 		err: errors.New("dead value store"),
 	}
 }
-func (vs *errorValueStore) Get(_ multihash.Multihash) ([]indexer.Value, bool, error) {
+func (vs *errorValueStore) Get(_ multihash.Multihash) ([]idxrcore.Value, bool, error) {
 	return nil, false, vs.err
 }
-func (vs *errorValueStore) Put(_ indexer.Value, _ ...multihash.Multihash) error    { return vs.err }
-func (vs *errorValueStore) Remove(_ indexer.Value, _ ...multihash.Multihash) error { return vs.err }
-func (vs *errorValueStore) RemoveProvider(_ context.Context, _ peer.ID) error      { return vs.err }
-func (vs *errorValueStore) RemoveProviderContext(_ peer.ID, _ []byte) error        { return vs.err }
-func (vs *errorValueStore) Size() (int64, error)                                   { return 0, vs.err }
-func (vs *errorValueStore) Flush() error                                           { return vs.err }
-func (vs *errorValueStore) Close() error                                           { return vs.err }
-func (vs *errorValueStore) Iter() (indexer.Iterator, error)                        { return nil, vs.err }
-func (vs *errorValueStore) Stats() (*indexer.Stats, error)                         { return nil, vs.err }
+func (vs *errorValueStore) Put(_ idxrcore.Value, _ ...multihash.Multihash) error    { return vs.err }
+func (vs *errorValueStore) Remove(_ idxrcore.Value, _ ...multihash.Multihash) error { return vs.err }
+func (vs *errorValueStore) RemoveProvider(_ context.Context, _ peer.ID) error       { return vs.err }
+func (vs *errorValueStore) RemoveProviderContext(_ peer.ID, _ []byte) error         { return vs.err }
+func (vs *errorValueStore) Size() (int64, error)                                    { return 0, vs.err }
+func (vs *errorValueStore) Flush() error                                            { return vs.err }
+func (vs *errorValueStore) Close() error                                            { return vs.err }
+func (vs *errorValueStore) Iter() (idxrcore.Iterator, error)                        { return nil, vs.err }
+func (vs *errorValueStore) Stats() (*idxrcore.Stats, error)                         { return nil, vs.err }

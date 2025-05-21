@@ -14,7 +14,7 @@ import (
 	"github.com/ipfs/boxo/bootstrap"
 	"github.com/ipfs/boxo/peering"
 	logging "github.com/ipfs/go-log/v2"
-	"github.com/ipni/go-indexer-core"
+	idxrcore "github.com/ipni/go-indexer-core"
 	"github.com/ipni/go-indexer-core/cache"
 	"github.com/ipni/go-indexer-core/cache/radixcache"
 	"github.com/ipni/go-indexer-core/engine"
@@ -24,6 +24,7 @@ import (
 	"github.com/ipni/go-libipni/mautil"
 	"github.com/ipni/storetheindex/config"
 	"github.com/ipni/storetheindex/fsutil"
+	"github.com/ipni/storetheindex/indexer"
 	"github.com/ipni/storetheindex/internal/ingest"
 	"github.com/ipni/storetheindex/internal/registry"
 	httpadmin "github.com/ipni/storetheindex/server/admin"
@@ -94,7 +95,7 @@ func daemonAction(cctx *cli.Context) error {
 	var freezeDirs []string
 
 	// Create a valuestore of the configured type.
-	valueStore, minKeyLen, vsDir, err := createValueStore(cctx.Context, cfg.Indexer)
+	valueStore, minKeyLen, vsDir, vsIsIndexed, err := createValueStore(cctx.Context, cfg.Indexer)
 	if err != nil {
 		return err
 	}
@@ -187,6 +188,8 @@ func daemonAction(cctx *cli.Context) error {
 		indexerCore = engine.New(valueStore, engine.WithCache(resultCache))
 	}
 
+	indexer := indexer.New(indexerCore, vsIsIndexed)
+
 	// Create registry
 	reg, err := registry.New(cctx.Context, cfg.Discovery, dstore,
 		registry.WithFreezer(freezeDirs, cfg.Indexer.FreezeAtPercent))
@@ -206,7 +209,7 @@ func daemonAction(cctx *cli.Context) error {
 		if err != nil {
 			return fmt.Errorf("bad find address %s: %s", findAddr, err)
 		}
-		findSvr, err = httpfind.New(findNetAddr.String(), indexerCore, reg,
+		findSvr, err = httpfind.New(findNetAddr.String(), indexer, reg,
 			httpfind.WithReadTimeout(time.Duration(cfg.Finder.ApiReadTimeout)),
 			httpfind.WithWriteTimeout(time.Duration(cfg.Finder.ApiWriteTimeout)),
 			httpfind.WithMaxConnections(cfg.Finder.MaxConnections),
@@ -262,7 +265,7 @@ func daemonAction(cctx *cli.Context) error {
 		}
 
 		// Initialize ingester.
-		ingester, err = ingest.NewIngester(cfg.Ingest, p2pHost, indexerCore, reg, dstore, dsTmp)
+		ingester, err = ingest.NewIngester(cfg.Ingest, p2pHost, indexer, reg, dstore, dsTmp)
 		if err != nil {
 			return err
 		}
@@ -306,7 +309,7 @@ func daemonAction(cctx *cli.Context) error {
 		if err != nil {
 			return fmt.Errorf("bad ingest address %s: %s", ingestAddr, err)
 		}
-		ingestSvr, err = httpingest.New(ingestNetAddr.String(), indexerCore, ingester, reg,
+		ingestSvr, err = httpingest.New(ingestNetAddr.String(), indexer, ingester, reg,
 			httpingest.WithVersion(cctx.App.Version))
 		if err != nil {
 			return err
@@ -535,11 +538,12 @@ func daemonAction(cctx *cli.Context) error {
 	return finalErr
 }
 
-func createValueStore(ctx context.Context, cfgIndexer config.Indexer) (indexer.Interface, int, string, error) {
+func createValueStore(ctx context.Context, cfgIndexer config.Indexer) (idxrcore.Interface, int, string, bool, error) {
 	var dir string
 	var err error
-	var vs indexer.Interface
+	var vs idxrcore.Interface
 	var minKeyLen int
+	var isIndexed bool
 
 	switch cfgIndexer.ValueStoreType {
 	case vstoreDHStore:
@@ -552,12 +556,12 @@ func createValueStore(ctx context.Context, cfgIndexer config.Indexer) (indexer.I
 	case vstorePebble:
 		dir, err = config.Path("", cfgIndexer.ValueStoreDir)
 		if err != nil {
-			return nil, 0, "", err
+			return nil, 0, "", false, err
 		}
 		log.Infow("Valuestore initializing/opening", "type", cfgIndexer.ValueStoreType, "path", dir)
 
 		if err = fsutil.DirWritable(dir); err != nil {
-			return nil, 0, "", err
+			return nil, 0, "", false, err
 		}
 
 		// TODO: parameterize values and study what settings are right for sti
@@ -616,13 +620,14 @@ func createValueStore(ctx context.Context, cfgIndexer config.Indexer) (indexer.I
 	case vstoreDynamoDB:
 		client := dynamodb.NewClient(cfgIndexer.DynamoDBRegion)
 		vs, err = dynamodb.NewStore(client, cfgIndexer.DynamoDBProvidersTable, cfgIndexer.DynamoDBMultihashMapTable)
+		isIndexed = true
 	default:
 		err = fmt.Errorf("unrecognized store type: %s", cfgIndexer.ValueStoreType)
 	}
 	if err != nil {
-		return nil, 0, "", fmt.Errorf("cannot create %s value store: %w", cfgIndexer.ValueStoreType, err)
+		return nil, 0, "", false, fmt.Errorf("cannot create %s value store: %w", cfgIndexer.ValueStoreType, err)
 	}
-	return vs, minKeyLen, dir, nil
+	return vs, minKeyLen, dir, isIndexed, nil
 }
 
 func setLoggingConfig(cfgLogging config.Logging) error {

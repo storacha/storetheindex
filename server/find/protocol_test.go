@@ -10,7 +10,7 @@ import (
 
 	"github.com/ipfs/go-cid"
 	"github.com/ipfs/go-test/random"
-	indexer "github.com/ipni/go-indexer-core"
+	idxrcore "github.com/ipni/go-indexer-core"
 	"github.com/ipni/go-indexer-core/cache/radixcache"
 	"github.com/ipni/go-indexer-core/engine"
 	"github.com/ipni/go-indexer-core/store/memory"
@@ -18,6 +18,7 @@ import (
 	"github.com/ipni/go-libipni/find/client"
 	"github.com/ipni/go-libipni/find/model"
 	"github.com/ipni/storetheindex/config"
+	"github.com/ipni/storetheindex/indexer"
 	"github.com/ipni/storetheindex/internal/registry"
 	httpserver "github.com/ipni/storetheindex/server/find"
 	"github.com/libp2p/go-libp2p/core/peer"
@@ -28,7 +29,7 @@ import (
 
 const providerID = "12D3KooWKRyzVWW6ChFjQjK4miCty85Niy48tpPV95XdKu1BcvMA"
 
-func setupServer(t *testing.T, ind indexer.Interface, reg *registry.Registry) *httpserver.Server {
+func setupServer(t *testing.T, ind indexer.Indexer, reg *registry.Registry) *httpserver.Server {
 	s, err := httpserver.New("127.0.0.1:0", ind, reg)
 	require.NoError(t, err)
 	t.Cleanup(func() {
@@ -164,26 +165,26 @@ func TestRemoveProvider(t *testing.T) {
 }
 
 // InitIndex initialize a new indexer engine.
-func initIndex(t *testing.T, withCache bool) indexer.Interface {
-	ind := engine.New(memory.New())
+func initIndex(t *testing.T, withCache bool) indexer.Indexer {
+	ind := indexer.New(engine.New(memory.New()), false)
 	t.Cleanup(func() {
-		require.NoError(t, ind.Close(), "Error closing indexer core")
+		require.NoError(t, ind.Close(), "Error closing indexer")
 	})
 	return ind
 }
 
 // InitPebbleIndex initialize a new indexer engine using pebbel with cache.
-func initPebbleIndex(t *testing.T, withCache bool) indexer.Interface {
+func initPebbleIndex(t *testing.T, withCache bool) indexer.Indexer {
 	valueStore, err := pebble.New(t.TempDir(), nil)
 	require.NoError(t, err)
-	var ind indexer.Interface
+	var ind indexer.Indexer
 	if withCache {
-		ind = engine.New(valueStore, engine.WithCache(radixcache.New(1000)))
+		ind = indexer.New(engine.New(valueStore, engine.WithCache(radixcache.New(1000))), false)
 	} else {
-		ind = engine.New(valueStore)
+		ind = indexer.New(engine.New(valueStore), false)
 	}
 	t.Cleanup(func() {
-		require.NoError(t, ind.Close(), "Error closing indexer core")
+		require.NoError(t, ind.Close(), "Error closing indexer")
 	})
 	return ind
 }
@@ -216,7 +217,7 @@ func initRegistryWithRestrictivePolicy(t *testing.T, restrictive bool) *registry
 }
 
 // populateIndex with some multihashes
-func populateIndex(ind indexer.Interface, mhs []multihash.Multihash, v indexer.Value, t *testing.T) {
+func populateIndex(ind indexer.Indexer, mhs []multihash.Multihash, v idxrcore.Value, t *testing.T) {
 	err := ind.Put(v, mhs...)
 	require.NoError(t, err, "Error putting multihashes")
 	vals, ok, err := ind.Get(mhs[0])
@@ -226,14 +227,14 @@ func populateIndex(ind indexer.Interface, mhs []multihash.Multihash, v indexer.V
 	require.True(t, v.Equal(vals[0]), "stored and retrieved values are different")
 }
 
-func findIndexTest(ctx context.Context, t *testing.T, f client.Finder, ind indexer.Interface, reg *registry.Registry) {
+func findIndexTest(ctx context.Context, t *testing.T, f client.Finder, ind indexer.Indexer, reg *registry.Registry) {
 	// Generate some multihashes and populate indexer
 	mhs := random.Multihashes(2)
 	p, err := peer.Decode(providerID)
 	require.NoError(t, err)
 	ctxID := []byte("test-context-id")
 	metadata := []byte("test-metadata")
-	v := indexer.Value{
+	v := idxrcore.Value{
 		ProviderID:    p,
 		ContextID:     ctxID,
 		MetadataBytes: metadata,
@@ -353,7 +354,7 @@ func verifyProviderInfo(t *testing.T, provInfo *model.ProviderInfo) {
 	})
 }
 
-func removeProviderTest(ctx context.Context, t *testing.T, c *client.Client, ind indexer.Interface, reg *registry.Registry) {
+func removeProviderTest(ctx context.Context, t *testing.T, c *client.Client, ind indexer.Indexer, reg *registry.Registry) {
 	// Generate some multihashes and populate indexer
 	mhs := random.Multihashes(15)
 	p, err := peer.Decode(providerID)
@@ -361,7 +362,7 @@ func removeProviderTest(ctx context.Context, t *testing.T, c *client.Client, ind
 	ctxID := []byte("test-context-id")
 	metadata := []byte("test-metadata")
 	require.NoError(t, err)
-	v := indexer.Value{
+	v := idxrcore.Value{
 		ProviderID:    p,
 		ContextID:     ctxID,
 		MetadataBytes: metadata,
@@ -408,14 +409,14 @@ func removeProviderTest(ctx context.Context, t *testing.T, c *client.Client, ind
 	require.ErrorContains(t, err, "not found")
 }
 
-func getStatsTest(ctx context.Context, t *testing.T, ind indexer.Interface, refreshStats func(), c *client.Client) {
+func getStatsTest(ctx context.Context, t *testing.T, ind indexer.Indexer, refreshStats func(), c *client.Client) {
 	t.Parallel()
 	mhs := random.Multihashes(15)
 	p, err := peer.Decode(providerID)
 	require.NoError(t, err)
 	ctxID := []byte("test-context-id")
 	metadata := []byte("test-metadata")
-	v := indexer.Value{
+	v := idxrcore.Value{
 		ProviderID:    p,
 		ContextID:     ctxID,
 		MetadataBytes: metadata,

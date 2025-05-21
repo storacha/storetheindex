@@ -11,12 +11,12 @@ import (
 	"github.com/ipfs/go-cid"
 	"github.com/ipfs/go-datastore"
 	dssync "github.com/ipfs/go-datastore/sync"
-	indexer "github.com/ipni/go-indexer-core"
 	"github.com/ipni/go-indexer-core/engine"
 	"github.com/ipni/go-indexer-core/store/memory"
 	"github.com/ipni/go-libipni/find/model"
 	"github.com/ipni/storetheindex/admin/client"
 	"github.com/ipni/storetheindex/config"
+	indexer "github.com/ipni/storetheindex/indexer"
 	"github.com/ipni/storetheindex/internal/ingest"
 	"github.com/ipni/storetheindex/internal/registry"
 	"github.com/ipni/storetheindex/server/admin"
@@ -34,7 +34,7 @@ const (
 )
 
 type testenv struct {
-	core     indexer.Interface
+	indexer  indexer.Indexer
 	ingester *ingest.Ingester
 	registry *registry.Registry
 	client   *client.Client
@@ -259,7 +259,7 @@ func makeTestenv(t *testing.T) *testenv {
 	}()
 
 	te := &testenv{
-		core:     idx,
+		indexer:  idx,
 		registry: reg,
 		ingester: ing,
 		server:   s,
@@ -274,7 +274,7 @@ func makeTestenv(t *testing.T) *testenv {
 	return te
 }
 
-func setupServer(t *testing.T, ind indexer.Interface, ing *ingest.Ingester, reg *registry.Registry) *admin.Server {
+func setupServer(t *testing.T, ind indexer.Indexer, ing *ingest.Ingester, reg *registry.Registry) *admin.Server {
 	reloadErrChan := make(chan chan error)
 	s, err := admin.New("127.0.0.1:0", serverID, ind, ing, reg, reloadErrChan)
 	require.NoError(t, err)
@@ -302,15 +302,15 @@ func initRegistry(t *testing.T, trustedID string) *registry.Registry {
 	return reg
 }
 
-func initIndex(t *testing.T, withCache bool) indexer.Interface {
-	ind := engine.New(memory.New())
+func initIndex(t *testing.T, withCache bool) indexer.Indexer {
+	ind := indexer.New(engine.New(memory.New()), false)
 	t.Cleanup(func() {
 		require.NoError(t, ind.Close())
 	})
 	return ind
 }
 
-func initIngest(t *testing.T, indx indexer.Interface, reg *registry.Registry) *ingest.Ingester {
+func initIngest(t *testing.T, indx indexer.Indexer, reg *registry.Registry) *ingest.Ingester {
 	cfg := config.NewIngest()
 	ds := dssync.MutexWrap(datastore.NewMapDatastore())
 	dsTmp := dssync.MutexWrap(datastore.NewMapDatastore())

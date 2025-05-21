@@ -11,7 +11,7 @@ import (
 	"github.com/ipfs/go-datastore"
 	dssync "github.com/ipfs/go-datastore/sync"
 	"github.com/ipfs/go-test/random"
-	indexer "github.com/ipni/go-indexer-core"
+	idxrcore "github.com/ipni/go-indexer-core"
 	"github.com/ipni/go-indexer-core/engine"
 	"github.com/ipni/go-indexer-core/store/memory"
 	"github.com/ipni/go-libipni/announce"
@@ -19,6 +19,7 @@ import (
 	"github.com/ipni/go-libipni/announce/message"
 	"github.com/ipni/go-libipni/ingest/client"
 	"github.com/ipni/storetheindex/config"
+	"github.com/ipni/storetheindex/indexer"
 	"github.com/ipni/storetheindex/internal/ingest"
 	"github.com/ipni/storetheindex/internal/registry"
 	httpserver "github.com/ipni/storetheindex/server/ingest"
@@ -33,7 +34,7 @@ var providerIdent = config.Identity{
 	PrivKey: "CAESQLypOCKYR7HGwVl4ngNhEqMZ7opchNOUA4Qc1QDpxsARGr2pWUgkXFXKU27TgzIHXqw0tXaUVx2GIbUuLitq22c=",
 }
 
-func setupServer(ind indexer.Interface, ing *ingest.Ingester, reg *registry.Registry, t *testing.T) *httpserver.Server {
+func setupServer(ind idxrcore.Interface, ing *ingest.Ingester, reg *registry.Registry, t *testing.T) *httpserver.Server {
 	s, err := httpserver.New("127.0.0.1:0", ind, ing, reg)
 	require.NoError(t, err)
 	return s
@@ -104,10 +105,10 @@ func TestAnnounce(t *testing.T) {
 }
 
 // initIndex initialize a new indexer engine.
-func initIndex(t *testing.T, withCache bool) indexer.Interface {
-	ind := engine.New(memory.New())
+func initIndex(t *testing.T, withCache bool) indexer.Indexer {
+	ind := indexer.New(engine.New(memory.New()), false)
 	t.Cleanup(func() {
-		require.NoError(t, ind.Close(), "Error closing indexer core")
+		require.NoError(t, ind.Close(), "Error closing indexer")
 	})
 	return ind
 }
@@ -130,7 +131,7 @@ func initRegistry(t *testing.T, trustedID string) *registry.Registry {
 	return reg
 }
 
-func initIngest(t *testing.T, indx indexer.Interface, reg *registry.Registry) *ingest.Ingester {
+func initIngest(t *testing.T, indx indexer.Indexer, reg *registry.Registry) *ingest.Ingester {
 	cfg := config.NewIngest()
 	ds := dssync.MutexWrap(datastore.NewMapDatastore())
 	dsTmp := dssync.MutexWrap(datastore.NewMapDatastore())
