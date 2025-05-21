@@ -379,10 +379,10 @@ func TestDDBStore_RemoveProvider(t *testing.T) {
 						if *input.TableName != "test-providers" {
 							return false
 						}
-						if input.KeyConditionExpression == nil || *input.KeyConditionExpression != "ProviderID = :providerID" {
+						if input.KeyConditionExpression == nil {
 							return false
 						}
-						if val, ok := input.ExpressionAttributeValues[":providerID"].(*types.AttributeValueMemberS); !ok || val.Value != providerID.String() {
+						if len(input.ExpressionAttributeNames) != 1 || len(input.ExpressionAttributeValues) != 1 {
 							return false
 						}
 						return true

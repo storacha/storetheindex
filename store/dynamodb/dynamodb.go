@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/expression"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/ipni/go-indexer-core"
@@ -96,12 +97,18 @@ func (s *ddbStore) batchGetItems(keys []map[string]types.AttributeValue) ([]map[
 // Get implements indexer.Interface.Get
 func (s *ddbStore) Get(mh multihash.Multihash) ([]indexer.Value, bool, error) {
 	// Query the multihashMapTable to get all ValueKeys for the given multihash
+	keyCond := expression.Key(fieldMultihash).Equal(expression.Value(mh))
+	keyExpr, err := expression.NewBuilder().WithKeyCondition(keyCond).Build()
+	if err != nil {
+		return nil, false, err
+	}
+
 	result, err := s.client.Query(context.TODO(), &dynamodb.QueryInput{
-		TableName:              aws.String(s.multihashMapTable),
-		KeyConditionExpression: aws.String(fieldMultihash + " = :mh"),
-		ExpressionAttributeValues: map[string]types.AttributeValue{
-			":mh": &types.AttributeValueMemberB{Value: mh},
-		},
+		TableName:                 aws.String(s.multihashMapTable),
+		KeyConditionExpression:    keyExpr.KeyCondition(),
+		ProjectionExpression:      keyExpr.Projection(),
+		ExpressionAttributeNames:  keyExpr.Names(),
+		ExpressionAttributeValues: keyExpr.Values(),
 	})
 
 	if err != nil {
@@ -225,23 +232,23 @@ func (s *ddbStore) batchWriteItems(requests []types.WriteRequest, tableName stri
 		return nil
 	}
 
-	// Split into chunks of 25 (DynamoDB limit)
+	// Split into batches of 25 (DynamoDB limit)
 	for i := 0; i < len(requests); i += 25 {
 		end := i + 25
 		if end > len(requests) {
 			end = len(requests)
 		}
-		chunk := requests[i:end]
+		batch := requests[i:end]
 
 		_, err := s.client.BatchWriteItem(context.TODO(), &dynamodb.BatchWriteItemInput{
 			RequestItems: map[string][]types.WriteRequest{
-				tableName: chunk,
+				tableName: batch,
 			},
 		})
 		if err != nil {
 			// Include the operation type in the error message for better debugging
 			operationType := "write"
-			if len(chunk) > 0 && chunk[0].DeleteRequest != nil {
+			if len(batch) > 0 && batch[0].DeleteRequest != nil {
 				operationType = "delete"
 			}
 			return fmt.Errorf("batch %s failed: %w", operationType, err)
@@ -289,15 +296,21 @@ func (s *ddbStore) RemoveProvider(ctx context.Context, providerID peer.ID) error
 	var lastEvaluatedKey map[string]types.AttributeValue
 	var deleteRequests []types.WriteRequest
 
+	key := expression.Key(fieldProviderID).Equal(expression.Value(providerID.String()))
+	keyExpr, err := expression.NewBuilder().WithKeyCondition(key).Build()
+	if err != nil {
+		return err
+	}
+
 	for {
 		// Query the providers table for all items with the given providerID
 		result, err := s.client.Query(ctx, &dynamodb.QueryInput{
-			TableName:              aws.String(s.providersTable),
-			KeyConditionExpression: aws.String(fieldProviderID + " = :providerID"),
-			ExpressionAttributeValues: map[string]types.AttributeValue{
-				":providerID": &types.AttributeValueMemberS{Value: providerID.String()},
-			},
-			ExclusiveStartKey: lastEvaluatedKey,
+			TableName:                 aws.String(s.providersTable),
+			KeyConditionExpression:    keyExpr.KeyCondition(),
+			ProjectionExpression:      keyExpr.Projection(),
+			ExpressionAttributeNames:  keyExpr.Names(),
+			ExpressionAttributeValues: keyExpr.Values(),
+			ExclusiveStartKey:         lastEvaluatedKey,
 		})
 		if err != nil {
 			return fmt.Errorf("failed to query provider items for deletion: %w", err)
@@ -332,17 +345,14 @@ func (s *ddbStore) RemoveProvider(ctx context.Context, providerID peer.ID) error
 
 // RemoveProviderContext implements indexer.Interface.RemoveProviderContext
 func (s *ddbStore) RemoveProviderContext(providerID peer.ID, contextID []byte) error {
-	// Create delete item input
-	input := &dynamodb.DeleteItemInput{
+	// Execute the delete operation
+	_, err := s.client.DeleteItem(context.TODO(), &dynamodb.DeleteItemInput{
 		TableName: aws.String(s.providersTable),
 		Key: map[string]types.AttributeValue{
 			fieldProviderID: &types.AttributeValueMemberS{Value: providerID.String()},
 			fieldContextID:  &types.AttributeValueMemberB{Value: contextID},
 		},
-	}
-
-	// Execute the delete operation
-	_, err := s.client.DeleteItem(context.TODO(), input)
+	})
 	if err != nil {
 		// If the item doesn't exist, it's not an error
 		var notFoundErr *types.ResourceNotFoundException
