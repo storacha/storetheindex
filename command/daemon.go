@@ -29,6 +29,7 @@ import (
 	httpadmin "github.com/ipni/storetheindex/server/admin"
 	httpfind "github.com/ipni/storetheindex/server/find"
 	httpingest "github.com/ipni/storetheindex/server/ingest"
+	"github.com/ipni/storetheindex/store/dynamodb"
 	"github.com/ipni/xedni"
 	"github.com/libp2p/go-libp2p"
 	"github.com/libp2p/go-libp2p/core/host"
@@ -39,9 +40,10 @@ import (
 
 // Recognized valuestore type names.
 const (
-	vstoreDHStore = "dhstore"
-	vstoreMemory  = "memory"
-	vstorePebble  = "pebble"
+	vstoreDHStore  = "dhstore"
+	vstoreMemory   = "memory"
+	vstorePebble   = "pebble"
+	vstoreDynamoDB = "dynamodb"
 )
 
 var log = logging.Logger("indexer")
@@ -607,6 +609,9 @@ func createValueStore(ctx context.Context, cfgIndexer config.Indexer) (indexer.I
 		pebbleOpts.Cache = pbl.NewCache(int64(cfgIndexer.PebbleBlockCacheSize))
 
 		vs, err = pebble.New(dir, pebbleOpts)
+	case vstoreDynamoDB:
+		client := dynamodb.NewClient(cfgIndexer.DynamoDBRegion)
+		vs, err = dynamodb.NewStore(client, cfgIndexer.DynamoDBProvidersTable, cfgIndexer.DynamoDBMultihashMapTable)
 	default:
 		err = fmt.Errorf("unrecognized store type: %s", cfgIndexer.ValueStoreType)
 	}

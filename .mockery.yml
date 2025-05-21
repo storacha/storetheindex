@@ -1,0 +1,12 @@
+issue-845-fix: True
+resolve-type-alias: False
+disable-version-string: True
+with-expecter: True
+inpackage: True
+filename: "mock_{{.InterfaceName}}.go"
+dir: "{{.InterfaceDir}}"
+mockname: "Mock{{.InterfaceName}}"
+packages:
+  github.com/ipni/storetheindex/store/dynamodb:
+    interfaces:
+      DynamoDBClient:

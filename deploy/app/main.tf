@@ -40,7 +40,7 @@ provider "aws" {
 
 
 module "app" {
-  source = "github.com/storacha/storoku//app?ref=v0.2.26"
+  source = "github.com/storacha/storoku//app?ref=v0.2.27"
   private_key = var.private_key
   private_key_env_var = "STORETHEINDEX_PRIV_KEY"
   httpport = 3000
@@ -85,6 +85,40 @@ module "app" {
         },
       ]
       hash_key = "DSKey"
+    },
+  
+    {
+      name = "valuestore-providers"
+      attributes = [
+        {
+          name = "ProviderID"
+          type = "S"
+        },
+      
+        {
+          name = "ContextID"
+          type = "B"
+        },
+      ]
+      hash_key = "ProviderID"
+      range_key ="ContextID"
+    },
+  
+    {
+      name = "valuestore-multihash-map"
+      attributes = [
+        {
+          name = "Multihash"
+          type = "B"
+        },
+      
+        {
+          name = "ValueKey"
+          type = "S"
+        },
+      ]
+      hash_key = "Multihash"
+      range_key ="ValueKey"
     },
   ]
   buckets = []
