@@ -1,5 +1,5 @@
 <%
-! IFS='' read -r -d '' Config <<"EOC"
+! IFS='' read -r -d '' Config <<EOC
 {
   "Version": 2,
   "Identity": {
@@ -31,10 +31,12 @@
     "MinimumPeers": 4
   },
   "Datastore": {
-    "Dir": "/home/nonroot/datastore",
-    "Type": "levelds",
-    "TmpDir": "/home/nonroot/tmpstore",
-    "TmpType": "levelds"
+    "Type": "dynamodb",
+    "Dir": "${TF_WORKSPACE}-${TF_VAR_app}-datastore",
+    "Region": "$TF_VAR_region",
+    "TmpType": "dynamodb",
+    "TmpDir": "${TF_WORKSPACE}-${TF_VAR_app}-tmp-datastore",
+    "TmpRegion": "$TF_VAR_region"
   },
   "Discovery": {
     "FilterIPs": true,
@@ -56,7 +58,8 @@
     "ConfigCheckInterval": "30s",
     "ShutdownTimeout": "15m",
     "ValueStoreDir": "/home/nonroot/valuestore",
-    "ValueStoreType": "pebble"
+    "ValueStoreType": "pebble",
+    "FreezeAtPercent": -1
   },
   "Ingest": {
     "AdvertisementDepthLimit": 33554432,

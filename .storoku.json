@@ -12,6 +12,29 @@
   "queues": null,
   "buckets": null,
   "secrets": null,
-  "tables": null,
+  "tables": [
+    {
+      "name": "datastore",
+      "attributes": [
+        {
+          "name": "DSKey",
+          "type": "S"
+        }
+      ],
+      "hashKey": "DSKey",
+      "rangeKey": ""
+    },
+    {
+      "name": "tmp-datastore",
+      "attributes": [
+        {
+          "name": "DSKey",
+          "type": "S"
+        }
+      ],
+      "hashKey": "DSKey",
+      "rangeKey": ""
+    }
+  ],
   "writeToContainer": true
 }

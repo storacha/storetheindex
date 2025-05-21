@@ -125,7 +125,7 @@ func daemonAction(cctx *cli.Context) error {
 	}
 
 	// Create datastore
-	dstore, dsDir, err := createDatastore(cctx.Context, cfg.Datastore.Dir, cfg.Datastore.Type, false)
+	dstore, dsDir, err := createDatastore(cctx.Context, cfg.Datastore)
 	if err != nil {
 		return err
 	}
@@ -137,7 +137,7 @@ func daemonAction(cctx *cli.Context) error {
 	freezeDirs = append(freezeDirs, dsDir)
 
 	// Create datastore for temporary ad data.
-	dsTmp, dsTmpDir, err := createDatastore(cctx.Context, cfg.Datastore.TmpDir, cfg.Datastore.TmpType, cfg.Datastore.RemoveTmpAtStart)
+	dsTmp, dsTmpDir, err := createTmpDatastore(cctx.Context, cfg.Datastore)
 	if err != nil {
 		return err
 	}
@@ -391,7 +391,7 @@ func daemonAction(cctx *cli.Context) error {
 	if cfgPath != "" {
 		modTime, _, statErr = fsutil.FileChanged(cfgPath, modTime)
 		if statErr != nil {
-			log.Error(err)
+			log.Error(statErr)
 		}
 		ticker = time.NewTicker(time.Duration(cfg.Indexer.ConfigCheckInterval))
 		timeChan = ticker.C
@@ -646,8 +646,8 @@ func loadConfig(filePath string) (*config.Config, error) {
 		log.Warn("Configuration file out-of-date. Upgrade by running: storetheindex init --upgrade")
 	}
 
-	if cfg.Datastore.Type != "levelds" {
-		return nil, fmt.Errorf("only levelds datastore type supported, %q not supported", cfg.Datastore.Type)
+	if cfg.Datastore.Type != "levelds" && cfg.Datastore.Type != "dynamodb" {
+		return nil, fmt.Errorf("only levelds and dynamodb datastore types supported, %q not supported", cfg.Datastore.Type)
 	}
 
 	return cfg, nil

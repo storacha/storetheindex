@@ -8,9 +8,13 @@ import (
 	"strings"
 	"time"
 
+	"github.com/aws/aws-sdk-go/aws"
+	ddbsession "github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/ipfs/go-cid"
 	"github.com/ipfs/go-datastore"
 	"github.com/ipfs/go-datastore/query"
+	dynamods "github.com/ipfs/go-ds-dynamodb"
 	leveldb "github.com/ipfs/go-ds-leveldb"
 	"github.com/ipni/storetheindex/config"
 	"github.com/ipni/storetheindex/fsutil"
@@ -25,10 +29,26 @@ const (
 	updateBatchSize = 500000
 )
 
-func createDatastore(ctx context.Context, dir, dsType string, rmExisting bool) (datastore.Batching, string, error) {
-	if dsType != "levelds" {
-		return nil, "", fmt.Errorf("only levelds datastore type supported, %q not supported", dsType)
+func createDatastore(ctx context.Context, cfg config.Datastore) (datastore.Batching, string, error) {
+	return createDS(ctx, cfg.Type, cfg.Dir, cfg.Region, false)
+}
+
+func createTmpDatastore(ctx context.Context, cfg config.Datastore) (datastore.Batching, string, error) {
+	return createDS(ctx, cfg.Type, cfg.TmpDir, cfg.TmpRegion, cfg.RemoveTmpAtStart)
+}
+
+func createDS(ctx context.Context, dsType, dirOrTable, region string, rmExisting bool) (datastore.Batching, string, error) {
+	switch dsType {
+	case "levelds":
+		return createLevelDBDatastore(ctx, dirOrTable, rmExisting)
+	case "dynamodb":
+		return createDynamoDBDatastore(ctx, dirOrTable, region)
+	default:
+		return nil, "", fmt.Errorf("only levelds and dynamodb datastore types supported, %q not supported", dsType)
 	}
+}
+
+func createLevelDBDatastore(ctx context.Context, dir string, rmExisting bool) (datastore.Batching, string, error) {
 	dataStorePath, err := config.Path("", dir)
 	if err != nil {
 		return nil, "", err
@@ -46,6 +66,16 @@ func createDatastore(ctx context.Context, dir, dsType string, rmExisting bool) (
 		return nil, "", err
 	}
 	return ds, dataStorePath, nil
+}
+
+func createDynamoDBDatastore(ctx context.Context, tableName, tableRegion string) (datastore.Batching, string, error) {
+	s := ddbsession.Must(ddbsession.NewSession(&aws.Config{
+		Region: aws.String(tableRegion),
+	}))
+	c := dynamodb.New(s)
+	ds := dynamods.New(c, tableName)
+
+	return ds, tableName, nil
 }
 
 func cleanupDTTempData(ctx context.Context, ds datastore.Batching) error {
