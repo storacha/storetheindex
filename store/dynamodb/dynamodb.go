@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/expression"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
@@ -38,10 +39,13 @@ type DynamoDBClient interface {
 	DeleteItem(ctx context.Context, params *dynamodb.DeleteItemInput, optFns ...func(*dynamodb.Options)) (*dynamodb.DeleteItemOutput, error)
 }
 
-func NewClient(region string) DynamoDBClient {
-	return dynamodb.NewFromConfig(aws.Config{
-		Region: region,
-	})
+func NewClient(region string) (DynamoDBClient, error) {
+	cfg, err := config.LoadDefaultConfig(context.Background(), config.WithRegion(region))
+	if err != nil {
+		return nil, err
+	}
+
+	return dynamodb.NewFromConfig(cfg), nil
 }
 
 type ddbStore struct {
@@ -50,8 +54,8 @@ type ddbStore struct {
 	multihashMapTable string
 }
 
-func NewStore(client DynamoDBClient, providersTable, multihashMapTable string) (*ddbStore, error) {
-	return &ddbStore{client: client, providersTable: providersTable, multihashMapTable: multihashMapTable}, nil
+func NewStore(client DynamoDBClient, providersTable, multihashMapTable string) *ddbStore {
+	return &ddbStore{client: client, providersTable: providersTable, multihashMapTable: multihashMapTable}
 }
 
 // batchGetItems retrieves multiple items from the providers table in batches.
