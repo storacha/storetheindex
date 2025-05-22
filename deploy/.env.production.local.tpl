@@ -65,8 +65,8 @@ fi
     "ShutdownTimeout": "15m",
     "ValueStoreType": "dynamodb",
     "DynamoDBRegion": "$TF_VAR_region",
-    "DynamoDBProvidersTable": "${TABLE_PREFIX}-providers",
-    "DynamoDBMultihashMapTable": "${TABLE_PREFIX}-multihash-map",
+    "DynamoDBProvidersTable": "${TABLE_PREFIX}-valuestore-providers",
+    "DynamoDBMultihashMapTable": "${TABLE_PREFIX}-valuestore-multihash-map",
     "FreezeAtPercent": -1
   },
   "Ingest": {},

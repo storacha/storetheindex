@@ -618,8 +618,12 @@ func createValueStore(ctx context.Context, cfgIndexer config.Indexer) (idxrcore.
 
 		vs, err = pebble.New(dir, pebbleOpts)
 	case vstoreDynamoDB:
-		client := dynamodb.NewClient(cfgIndexer.DynamoDBRegion)
-		vs, err = dynamodb.NewStore(client, cfgIndexer.DynamoDBProvidersTable, cfgIndexer.DynamoDBMultihashMapTable)
+		client, err := dynamodb.NewClient(cfgIndexer.DynamoDBRegion)
+		if err != nil {
+			return nil, 0, "", false, fmt.Errorf("cannot create dynamodb client: %w", err)
+		}
+
+		vs = dynamodb.NewStore(client, cfgIndexer.DynamoDBProvidersTable, cfgIndexer.DynamoDBMultihashMapTable)
 		isIndexed = true
 	default:
 		err = fmt.Errorf("unrecognized store type: %s", cfgIndexer.ValueStoreType)
