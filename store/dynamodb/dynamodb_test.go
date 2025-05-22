@@ -103,8 +103,7 @@ func TestDDBStore_Get(t *testing.T) {
 			}
 
 			// Create store with mock client
-			store, err := NewStore(mockClient, "test-providers", "test-multihashes")
-			require.NoError(t, err)
+			store := NewStore(mockClient, "test-providers", "test-multihashes")
 
 			// Test Get
 			values, exists, err := store.Get(mh)
@@ -260,11 +259,10 @@ func TestDDBStore_Put(t *testing.T) {
 			}
 
 			// Create store with mock client
-			store, err := NewStore(mockClient, "test-providers", "test-multihashes")
-			require.NoError(t, err)
+			store := NewStore(mockClient, "test-providers", "test-multihashes")
 
 			// Test Put
-			err = store.Put(tt.value, tt.mhs...)
+			err := store.Put(tt.value, tt.mhs...)
 
 			// Assertions
 			if tt.expectedErr {
@@ -340,11 +338,10 @@ func TestDDBStore_Remove(t *testing.T) {
 			}
 
 			// Create store with mock client
-			store, err := NewStore(mockClient, "test-providers", "test-multihashes")
-			require.NoError(t, err)
+			store := NewStore(mockClient, "test-providers", "test-multihashes")
 
 			// Test Remove
-			err = store.Remove(tt.value, tt.mhs...)
+			err := store.Remove(tt.value, tt.mhs...)
 
 			// Assertions
 			if tt.expectedErr {
@@ -491,11 +488,10 @@ func TestDDBStore_RemoveProvider(t *testing.T) {
 			}
 
 			// Create store with mock client
-			store, err := NewStore(mockClient, "test-providers", "test-multihashes")
-			require.NoError(t, err)
+			store := NewStore(mockClient, "test-providers", "test-multihashes")
 
 			// Test RemoveProvider
-			err = store.RemoveProvider(context.Background(), tt.providerID)
+			err := store.RemoveProvider(context.Background(), tt.providerID)
 
 			// Assertions
 			if tt.expectedErr {
@@ -564,11 +560,10 @@ func TestDDBStore_RemoveProviderContext(t *testing.T) {
 			}
 
 			// Create store with mock client
-			store, err := NewStore(mockClient, "test-providers", "test-multihashes")
-			require.NoError(t, err)
+			store := NewStore(mockClient, "test-providers", "test-multihashes")
 
 			// Test RemoveProviderContext
-			err = store.RemoveProviderContext(tt.providerID, tt.contextID)
+			err := store.RemoveProviderContext(tt.providerID, tt.contextID)
 
 			// Assertions
 			if tt.expectedErr {
