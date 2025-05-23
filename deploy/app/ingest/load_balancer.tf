@@ -36,20 +36,8 @@ resource "aws_lb_listener_rule" "announce" {
      values = ["/announce*"]
    }
  }
-}
 
-resource "aws_lb_listener_rule" "providers" {
- listener_arn = var.lb_listener.arn
- priority     = 20
-
- action {
-   type             = "forward"
-   target_group_arn = aws_lb_target_group.blue.arn
- }
-
- condition {
-   path_pattern {
-     values = ["/providers*"]
-   }
+ tags = {
+   "Name" = "announce-to-ingest-service"
  }
 }
