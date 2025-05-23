@@ -28,8 +28,6 @@ variable "deployment_config" {
   type = object({
     cpu = number
     memory = number
-    service_min = number
-    service_max = number
     httpport = number
     readonly = bool
   })
