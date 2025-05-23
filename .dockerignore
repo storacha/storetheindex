@@ -1,5 +1,6 @@
 # Deployment
 deploy/.env.production.local.tpl
+deploy/.env.ingest.production.local.tpl
 deploy/.env.terraform.tpl
 deploy/.env.terraform
 deploy/Makefile

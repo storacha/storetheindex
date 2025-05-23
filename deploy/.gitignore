@@ -1,5 +1,6 @@
 # Deployment
 .env.production.local
+.env.ingest.production.local
 .env.terraform
 .terraform
 .tfworkspace
