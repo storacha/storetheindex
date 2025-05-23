@@ -1,3 +1,5 @@
+# storoku:ignore
+
 variable "app" {
   description = "The name of the application"
   type        = string
@@ -36,6 +38,12 @@ variable "principal_mapping" {
 
 variable "env_files" {
   description = "list of environment variable files to upload"
+  type = list(string)
+  default = []
+}
+
+variable "ingest_env_files" {
+  description = "list of environment variable files to upload for the ingest service"
   type = list(string)
   default = []
 }

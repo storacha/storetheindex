@@ -1,3 +1,5 @@
+# storoku:ignore
+
 terraform {
   required_providers {
     aws = {
@@ -37,10 +39,8 @@ provider "aws" {
   alias = "acm"
 }
 
-
-
 module "app" {
-  source = "github.com/storacha/storoku//app?ref=v0.2.27"
+  source = "github.com/storacha/storoku//app?ref=v0.2.32"
   private_key = var.private_key
   private_key_env_var = "STORETHEINDEX_PRIV_KEY"
   httpport = 3000
@@ -128,4 +128,23 @@ module "app" {
   }
   env_files = var.env_files
   domain_base = var.domain_base
+}
+
+module "ingest" {
+  source = "./ingest"
+  app = "${var.app}-ingest"
+  environment = terraform.workspace
+  vpc = module.app.vpc
+  ecs_cluster = module.app.ecs_infra.ecs_cluster
+  ecs_log_group = module.app.ecs_infra.aws_cloudwatch_log_group
+  find_task_family = module.app.deployment.task_definition.family
+  lb_listener = module.app.ecs_infra.lb_listener
+  lb_security_group = module.app.ecs_infra.lb_security_group
+  httpport = 3001
+  write_to_container = true
+  image_tag = var.image_tag
+  env_files = var.ingest_env_files
+  env_files_bucket_id = module.app.env_files.bucket_id
+  secrets = module.app.secrets
+  tables = module.app.tables
 }
