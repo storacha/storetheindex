@@ -1,3 +1,5 @@
+# storoku:ignore
+
 ifneq (,$(wildcard ./.env.terraform))
 	include .env.terraform
 	export
@@ -24,12 +26,17 @@ eval_image_tag:
 
 # GET the absolute location for .env.production.local, again, only after it exists
 
-
 get_env_file = ENV_FILE = $$(abspath .env.production.local)
 
 .PHONY: eval_env_file
 eval_env_file: .env.production.local
 	$(eval $(get_env_file))
+
+get_ingest_env_file = INGEST_ENV_FILE = $$(abspath .env.ingest.production.local)
+
+.PHONY: eval_ingest_env_file
+eval_ingest_env_file: .env.ingest.production.local
+	$(eval $(get_ingest_env_file))
 
 .PHONY: docker-login
 docker-login:
@@ -40,7 +47,10 @@ docker-login:
 .env.production.local: .env.terraform .env.production.local.tpl
 	./esh -s /bin/bash -o .env.production.local .env.production.local.tpl 
 
-docker-build: docker-login .env.production.local
+.env.ingest.production.local: .env.terraform .env.ingest.production.local.tpl
+	./esh -s /bin/bash -o .env.ingest.production.local .env.ingest.production.local.tpl
+
+docker-build: docker-login .env.production.local .env.ingest.production.local
 	docker buildx build --platform linux/arm64 -t $(IMAGE_TAG_BASE)-latest --load ..
 
 format-filter ="{{ .Id }}"
@@ -113,8 +123,8 @@ plan-shared: shared/.terraform
 
 .PHONY: plan-app
 
-plan-app: app/.terraform .tfworkspace eval_image_tag eval_env_file
-	tofu -chdir=app plan -var="image_tag=$(REPLICATED_IMAGE_TAG)" -var='env_files=["$(ENV_FILE)"]'
+plan-app: app/.terraform .tfworkspace eval_image_tag eval_env_file eval_ingest_env_file
+	tofu -chdir=app plan -var="image_tag=$(REPLICATED_IMAGE_TAG)" -var='env_files=["$(ENV_FILE)"]' -var='ingest_env_files=["$(INGEST_ENV_FILE)"]'
 
 .PHONY: plan
 
@@ -133,8 +143,8 @@ apply-shared: shared/.terraform
 
 .PHONY: apply-app
 
-apply-app: app/.terraform .tfworkspace docker-push eval_image_tag eval_env_file
-	tofu -chdir=app apply -var="image_tag=$(REPLICATED_IMAGE_TAG)" -var='env_files=["$(ENV_FILE)"]' $(APPLY_ARGS)
+apply-app: app/.terraform .tfworkspace docker-push eval_image_tag eval_env_file eval_ingest_env_file
+	tofu -chdir=app apply -var="image_tag=$(REPLICATED_IMAGE_TAG)" -var='env_files=["$(ENV_FILE)"]' -var='ingest_env_files=["$(INGEST_ENV_FILE)"]' $(APPLY_ARGS)
 
 .PHONY: apply
 
@@ -146,10 +156,9 @@ console-shared: shared/.terraform
 	TF_WORKSPACE=default tofu -chdir=shared console $(APPLY_ARGS)
 
 .PHONY: console-app
-console: app/.terraform .tfworkspace eval_image_tag eval_env_file
-	tofu -chdir=app console -var="image_tag=$(REPLICATED_IMAGE_TAG)" -var='env_files=["$(ENV_FILE)"]' $(APPLY_ARGS)
+console: app/.terraform .tfworkspace eval_image_tag eval_env_file eval_ingest_env_file
+	tofu -chdir=app console -var="image_tag=$(REPLICATED_IMAGE_TAG)" -var='env_files=["$(ENV_FILE)"]' -var='ingest_env_files=["$(INGEST_ENV_FILE)"]' $(APPLY_ARGS)
 
 .PHONY: wait-deploy
 wait-deploy:
 	aws deploy wait deployment-successful --region $(TF_VAR_region) --deployment-id $(shell aws deploy list-deployments --region $(TF_VAR_region) --deployment-group-name $(TF_WORKSPACE)-$(TF_VAR_app)-code-deploy-deployment-group --application-name $(TF_WORKSPACE)-$(TF_VAR_app)-code-deploy-app --query "deployments[0]" --output text)
-
