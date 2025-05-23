@@ -13,10 +13,10 @@ fi
     "PrivKey": ""
   },
   "Addresses": {
-    "Admin": "/ip4/0.0.0.0/tcp/3002",
+    "Admin": "none",
     "Finder": "/ip4/0.0.0.0/tcp/3000",
-    "Ingest": "/ip4/0.0.0.0/tcp/3001",
-    "P2PAddr": "/ip4/0.0.0.0/tcp/3003",
+    "Ingest": "none",
+    "P2PAddr": "none",
     "NoResourceManager": true
   },
   "Bootstrap": {
@@ -40,9 +40,9 @@ fi
     "Type": "dynamodb",
     "Dir": "${TABLE_PREFIX}-datastore",
     "Region": "$TF_VAR_region",
-    "TmpType": "dynamodb",
-    "TmpDir": "${TABLE_PREFIX}-tmp-datastore",
-    "TmpRegion": "$TF_VAR_region"
+    "TmpType": "none",
+    "TmpDir": "",
+    "TmpRegion": ""
   },
   "Discovery": {
     "FilterIPs": true,
@@ -69,19 +69,7 @@ fi
     "DynamoDBMultihashMapTable": "${TABLE_PREFIX}-valuestore-multihash-map",
     "FreezeAtPercent": -1
   },
-  "Ingest": {
-    "AdvertisementDepthLimit": 33554432,
-    "EntriesDepthLimit": 65536,
-    "HttpSyncRetryMax": 0,
-    "HttpSyncRetryWaitMax": "30s",
-    "HttpSyncRetryWaitMin": "1s",
-    "HttpSyncTimeout": "10s",
-    "IngestWorkerCount": 10,
-    "PubSubTopic": "/indexer/ingest/mainnet",
-    "ResendDirectAnnounce": false,
-    "SyncSegmentDepthLimit": 2000,
-    "SyncTimeout": "2h0m0s"
-  },
+  "Ingest": {},
   "Logging": {
     "Level": "info",
       "Loggers": {

@@ -18,10 +18,10 @@ import (
 	logging "github.com/ipfs/go-log/v2"
 	"github.com/ipld/go-ipld-prime"
 	cidlink "github.com/ipld/go-ipld-prime/linking/cid"
-	indexer "github.com/ipni/go-indexer-core"
 	"github.com/ipni/go-libipni/announce"
 	"github.com/ipni/go-libipni/dagsync"
 	"github.com/ipni/storetheindex/config"
+	"github.com/ipni/storetheindex/indexer"
 	"github.com/ipni/storetheindex/internal/metrics"
 	"github.com/ipni/storetheindex/internal/registry"
 	"github.com/ipni/storetheindex/rate"
@@ -86,7 +86,7 @@ type Ingester struct {
 	ds      datastore.Batching
 	dsTmp   datastore.Batching
 	lsys    ipld.LinkSystem
-	indexer indexer.Interface
+	indexer indexer.Indexer
 
 	closeOnce sync.Once
 
@@ -151,7 +151,7 @@ type Ingester struct {
 
 // NewIngester creates a new Ingester that uses a dagsync Subscriber to handle
 // communication with providers.
-func NewIngester(cfg config.Ingest, h host.Host, idxr indexer.Interface, reg *registry.Registry, ds, dsTmp datastore.Batching) (*Ingester, error) {
+func NewIngester(cfg config.Ingest, h host.Host, idxr indexer.Indexer, reg *registry.Registry, ds, dsTmp datastore.Batching) (*Ingester, error) {
 	if cfg.IngestWorkerCount == 0 {
 		return nil, errors.New("ingester worker count must be > 0")
 	}
@@ -718,11 +718,18 @@ func (ing *Ingester) autoSync() {
 			if err := ing.removePublisher(ctx, provInfo.Publisher); err != nil {
 				log.Errorw("Error removing provider", "err", err, "provider", provInfo.AddrInfo.ID)
 			}
-			// Do not remove provider info from core, because that requires
-			// scanning the entire core valuestore. Instead, let the finder
+			// If the indexer doesn't use an indexed valuestore, then do not
+			// remove provider info from the indexer, because that requires
+			// scanning the entire indexer valuestore. Instead, let the finder
 			// delete provider contexts as deleted providers appear in find
 			// results.
-			continue
+			if !ing.indexer.HasIndexedStore() {
+				continue
+			}
+
+			// If the indexer's valuestore is indexed, then remove the entries
+			// related with the deleted provider.
+			ing.indexer.RemoveProvider(ctx, provInfo.AddrInfo.ID)
 		}
 
 		// If the provider has a stop cid, then that is the point to resume

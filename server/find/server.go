@@ -14,10 +14,11 @@ import (
 
 	"github.com/ipfs/go-cid"
 	logging "github.com/ipfs/go-log/v2"
-	"github.com/ipni/go-indexer-core"
+	idxrcore "github.com/ipni/go-indexer-core"
 	coremetrics "github.com/ipni/go-indexer-core/metrics"
 	"github.com/ipni/go-libipni/apierror"
 	"github.com/ipni/go-libipni/find/model"
+	"github.com/ipni/storetheindex/indexer"
 	"github.com/ipni/storetheindex/internal/httpserver"
 	"github.com/ipni/storetheindex/internal/metrics"
 	"github.com/ipni/storetheindex/internal/registry"
@@ -34,7 +35,7 @@ type Server struct {
 	server    *http.Server
 	listener  net.Listener
 	healthMsg string
-	indexer   indexer.Interface
+	indexer   indexer.Indexer
 	registry  *registry.Registry
 	stats     *cachedStats
 }
@@ -46,7 +47,7 @@ func (s *Server) URL() string {
 //go:embed *.html
 var webUI embed.FS
 
-func New(listen string, indexer indexer.Interface, registry *registry.Registry, options ...Option) (*Server, error) {
+func New(listen string, indexer indexer.Indexer, registry *registry.Registry, options ...Option) (*Server, error) {
 	opts, err := getOpts(options)
 	if err != nil {
 		return nil, err
@@ -485,16 +486,20 @@ func (s *Server) fetchProviderInfo(provID peer.ID, contextID []byte, provAddrs m
 	pinfo, allowed := s.registry.ProviderInfo(provID)
 	if pinfo == nil && removeProviderContext {
 		// If provider not in registry, then provider was deleted.
-		// Tell the indexed core to delete the contextID for the
-		// deleted provider. Delete the contextID from the core,
+		// If the indexer's valuestore is indexed, the ingester will take
+		// care of deleting all records for the deleted provider.
+		// If it isn't, then we will delete the contextID from the indexer,
 		// because there is no way to delete all records for the
-		// provider without a scan of the entire core valuestore.
-		go func(provID peer.ID, contextID []byte) {
-			err := s.indexer.RemoveProviderContext(provID, contextID)
-			if err != nil {
-				log.Errorw("Error removing provider context", "err", err)
-			}
-		}(provID, contextID)
+		// provider without a scan of the entire indexer valuestore.
+		if !s.indexer.HasIndexedStore() {
+			go func(provID peer.ID, contextID []byte) {
+				err := s.indexer.RemoveProviderContext(provID, contextID)
+				if err != nil {
+					log.Errorw("Error removing provider context", "err", err)
+				}
+			}(provID, contextID)
+		}
+
 		// If provider not in registry, do not return in result.
 		return nil
 	}
@@ -506,7 +511,7 @@ func (s *Server) fetchProviderInfo(provID peer.ID, contextID []byte, provAddrs m
 	return pinfo
 }
 
-func createExtendedProviderResult(epInfo registry.ExtendedProviderInfo, iVal indexer.Value) *model.ProviderResult {
+func createExtendedProviderResult(epInfo registry.ExtendedProviderInfo, iVal idxrcore.Value) *model.ProviderResult {
 	metadata := epInfo.Metadata
 	if metadata == nil {
 		metadata = iVal.MetadataBytes

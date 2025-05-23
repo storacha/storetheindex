@@ -6,9 +6,10 @@ import (
 
 	"github.com/ipfs/go-cid"
 	"github.com/ipfs/go-test/random"
-	"github.com/ipni/go-indexer-core"
+	idxrcore "github.com/ipni/go-indexer-core"
 	"github.com/ipni/go-libipni/find/client"
 	"github.com/ipni/go-libipni/find/model"
+	"github.com/ipni/storetheindex/indexer"
 	"github.com/ipni/storetheindex/internal/registry"
 	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/multiformats/go-multiaddr"
@@ -16,7 +17,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func providersShouldBeUnaffectedByExtendedProvidersOfEachOtherTest(ctx context.Context, t *testing.T, f client.Finder, ind indexer.Interface, reg *registry.Registry) {
+func providersShouldBeUnaffectedByExtendedProvidersOfEachOtherTest(ctx context.Context, t *testing.T, f client.Finder, ind indexer.Indexer, reg *registry.Registry) {
 	provider1Id, _, _ := random.Identity()
 	ctxId1 := []byte("test-context-id-1")
 	metadata1 := []byte("test-metadata-1")
@@ -54,7 +55,7 @@ func providersShouldBeUnaffectedByExtendedProvidersOfEachOtherTest(ctx context.C
 	require.NoError(t, err)
 }
 
-func extendedProviderShouldHaveOwnMetadataTest(ctx context.Context, t *testing.T, f client.Finder, ind indexer.Interface, reg *registry.Registry) {
+func extendedProviderShouldHaveOwnMetadataTest(ctx context.Context, t *testing.T, f client.Finder, ind indexer.Indexer, reg *registry.Registry) {
 	provider1Id, _, _ := random.Identity()
 	ctxId1 := []byte("test-context-id-1")
 	metadata1 := []byte("test-metadata-1")
@@ -121,7 +122,7 @@ func extendedProviderShouldHaveOwnMetadataTest(ctx context.Context, t *testing.T
 	require.NoError(t, err)
 }
 
-func extendedProviderShouldInheritMetadataOfMainProviderTest(ctx context.Context, t *testing.T, f client.Finder, ind indexer.Interface, reg *registry.Registry) {
+func extendedProviderShouldInheritMetadataOfMainProviderTest(ctx context.Context, t *testing.T, f client.Finder, ind indexer.Indexer, reg *registry.Registry) {
 	provider1Id, _, _ := random.Identity()
 	ctxId1 := []byte("test-context-id-1")
 	metadata1 := []byte("test-metadata-1")
@@ -184,7 +185,7 @@ func extendedProviderShouldInheritMetadataOfMainProviderTest(ctx context.Context
 	require.NoError(t, err)
 }
 
-func contextualExtendedProvidersShouldUnionUpWithChainLevelOnesTest(ctx context.Context, t *testing.T, f client.Finder, ind indexer.Interface, reg *registry.Registry) {
+func contextualExtendedProvidersShouldUnionUpWithChainLevelOnesTest(ctx context.Context, t *testing.T, f client.Finder, ind indexer.Indexer, reg *registry.Registry) {
 	provider1Id, _, _ := random.Identity()
 	ctxId1 := []byte("test-context-id-1")
 	metadata1 := []byte("test-metadata-1")
@@ -219,7 +220,7 @@ func contextualExtendedProvidersShouldUnionUpWithChainLevelOnesTest(ctx context.
 	ctxId2 := []byte("test-context-id-2")
 	mhs2 := random.Multihashes(10)
 
-	v := indexer.Value{
+	v := idxrcore.Value{
 		ProviderID:    prov1,
 		ContextID:     ctxId2,
 		MetadataBytes: metadata1,
@@ -280,7 +281,7 @@ func contextualExtendedProvidersShouldUnionUpWithChainLevelOnesTest(ctx context.
 	require.NoError(t, err)
 }
 
-func contextualExtendedProvidersShouldOverrideChainLevelOnesTest(ctx context.Context, t *testing.T, f client.Finder, ind indexer.Interface, reg *registry.Registry) {
+func contextualExtendedProvidersShouldOverrideChainLevelOnesTest(ctx context.Context, t *testing.T, f client.Finder, ind indexer.Indexer, reg *registry.Registry) {
 	provider1Id, _, _ := random.Identity()
 	ctxId1 := []byte("test-context-id-1")
 	metadata1 := []byte("test-metadata-1")
@@ -335,7 +336,7 @@ func contextualExtendedProvidersShouldOverrideChainLevelOnesTest(ctx context.Con
 	require.NoError(t, err)
 }
 
-func mainProviderChainRecordIsIncludedIfItsMetadataIsDifferentTest(ctx context.Context, t *testing.T, f client.Finder, ind indexer.Interface, reg *registry.Registry) {
+func mainProviderChainRecordIsIncludedIfItsMetadataIsDifferentTest(ctx context.Context, t *testing.T, f client.Finder, ind indexer.Indexer, reg *registry.Registry) {
 	providerId, _, _ := random.Identity()
 	ctxId1 := []byte("test-context-id-1")
 	providerMetadata := []byte("provider metadata")
@@ -387,7 +388,7 @@ func mainProviderChainRecordIsIncludedIfItsMetadataIsDifferentTest(ctx context.C
 	require.NoError(t, err)
 }
 
-func mainProviderContextRecordIsIncludedIfItsMetadataIsDifferentTest(ctx context.Context, t *testing.T, f client.Finder, ind indexer.Interface, reg *registry.Registry) {
+func mainProviderContextRecordIsIncludedIfItsMetadataIsDifferentTest(ctx context.Context, t *testing.T, f client.Finder, ind indexer.Indexer, reg *registry.Registry) {
 	providerId, _, _ := random.Identity()
 	ctxId1 := []byte("test-context-id-1")
 	providerMetadata := []byte("provider metadata")
@@ -439,11 +440,11 @@ func mainProviderContextRecordIsIncludedIfItsMetadataIsDifferentTest(ctx context
 	require.NoError(t, err)
 }
 
-func createProviderAndPopulateIndexer(t *testing.T, ctx context.Context, ind indexer.Interface, reg *registry.Registry, contextID []byte, metadata []byte, providerID peer.ID, addrs []multiaddr.Multiaddr, extendedProviders *registry.ExtendedProviders) (peer.ID, []multihash.Multihash) {
+func createProviderAndPopulateIndexer(t *testing.T, ctx context.Context, ind indexer.Indexer, reg *registry.Registry, contextID []byte, metadata []byte, providerID peer.ID, addrs []multiaddr.Multiaddr, extendedProviders *registry.ExtendedProviders) (peer.ID, []multihash.Multihash) {
 	// Generate some multihashes and populate indexer
 	mhs := random.Multihashes(10)
 
-	v := indexer.Value{
+	v := idxrcore.Value{
 		ProviderID:    providerID,
 		ContextID:     contextID,
 		MetadataBytes: metadata,
