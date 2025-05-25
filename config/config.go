@@ -102,7 +102,7 @@ func Load(filePath string) (*Config, error) {
 	if cfgStr != "" {
 		cfgBytes, err := base64.StdEncoding.DecodeString(cfgStr)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("cannot decode config from env variable (%s): %w", cfgStr, err)
 		}
 
 		cfgReader = bytes.NewReader(cfgBytes)
