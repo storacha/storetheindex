@@ -1,9 +1,5 @@
 <%
-if [ "$TF_WORKSPACE" != "prod" ]; then
-  TABLE_PREFIX="${TF_WORKSPACE}-${TF_VAR_app}"
-else
-  TABLE_PREFIX="${TF_VAR_app}"
-fi
+TABLE_PREFIX="${TF_WORKSPACE}-${TF_VAR_app}"
 
 ! IFS='' read -r -d '' Config <<EOC
 {
@@ -101,4 +97,4 @@ EOC
 Config=$(echo "$Config" | base64)
 %>
 
-STORETHEINDEX_CONFIG=<%= $Config %>
+STORETHEINDEX_CONFIG=<%= "$Config" %>
