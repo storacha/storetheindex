@@ -94,7 +94,14 @@ TABLE_PREFIX="${TF_WORKSPACE}-${TF_VAR_app}"
 }
 EOC
 
-Config=$(echo "$Config" | base64)
+# GNU coreutils base64 (what comes installed in Ubuntu and most other linuxes) wraps
+# lines at 76 characters by default. macOS base64 does not wrap by default and uses
+# a different syntax to specify line wrapping (-b)
+if [[ "$OSTYPE" == "linux-gnu"* ]]; then
+  Config=$(echo "$Config" | base64 -w 0)
+else
+  Config=$(echo "$Config" | base64)
+fi
 %>
 
-STORETHEINDEX_CONFIG=<%= "$Config" %>
+STORETHEINDEX_CONFIG=<%= $Config %>
