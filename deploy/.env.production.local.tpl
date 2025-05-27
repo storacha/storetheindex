@@ -1,9 +1,5 @@
 <%
-if [ "$TF_WORKSPACE" != "prod" ]; then
-  TABLE_PREFIX="${TF_WORKSPACE}-${TF_VAR_app}"
-else
-  TABLE_PREFIX="${TF_VAR_app}"
-fi
+TABLE_PREFIX="${TF_WORKSPACE}-${TF_VAR_app}"
 
 ! IFS='' read -r -d '' Config <<EOC
 {
@@ -86,7 +82,14 @@ fi
 }
 EOC
 
-Config=$(echo "$Config" | base64)
+# GNU coreutils base64 (what comes installed in Ubuntu and most other linuxes) wraps
+# lines at 76 characters by default. macOS base64 does not wrap by default and uses
+# a different syntax to specify line wrapping (-b)
+if [[ "$OSTYPE" == "linux-gnu"* ]]; then
+  Config=$(echo "$Config" | base64 -w 0)
+else
+  Config=$(echo "$Config" | base64)
+fi
 %>
 
 STORETHEINDEX_CONFIG=<%= $Config %>

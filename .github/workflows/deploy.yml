@@ -6,30 +6,19 @@ on:
       - main
   pull_request:
     branches: [main]
+  workflow_run:
+    workflows: [Releaser]
+    types: [completed]
+    branches: [main]
   workflow_dispatch:
 
-jobs:
-  release:
-    runs-on: ubuntu-latest
-    if: ${{ github.ref == 'refs/heads/main' }}
-    permissions:
-      contents: write
-      issues: write
-      pull-requests: write
-    steps:
-      - name: Release Please
-        uses: googleapis/release-please-action@v4
-        id: release
-        with:
-          release-type: node
-    outputs:
-      release_created: ${{ steps.release.outputs.release_created }}
+permissions:
+  id-token: write # This is required for requesting the JWT
+  contents: read # This is required for actions/checkout
 
+jobs:
   # apply staging on pushes to main, plan otherwise
   staging:
-    permissions:
-      id-token: write # This is required for requesting the JWT
-      contents: read # This is required for actions/checkout
     uses: ./.github/workflows/terraform.yml
     with:
       env: staging
@@ -46,16 +35,12 @@ jobs:
 
   # apply prod on successful release, plan otherwise
   production:
-    permissions:
-      id-token: write # This is required for requesting the JWT
-      contents: read # This is required for actions/checkout
-    needs: release
     uses: ./.github/workflows/terraform.yml
     with:
       env: production
       workspace: prod
       did: did:web:ipni.storacha.network
-      apply: ${{ needs.release.outputs.release_created == 'true' }}
+      apply: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' }}
     secrets:
       aws-account-id: ${{ secrets.PROD_AWS_ACCOUNT_ID }}
       aws-region: ${{ secrets.PROD_AWS_REGION }}
