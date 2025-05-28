@@ -2,6 +2,7 @@ package dynamodb
 
 import (
 	"context"
+	"encoding/base64"
 	"testing"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -42,7 +43,7 @@ func TestDDBStore_Get(t *testing.T) {
 						Items: []map[string]types.AttributeValue{
 							{
 								fieldValueKey: &types.AttributeValueMemberS{
-									Value: providerID.String() + "/" + string(contextID),
+									Value: providerID.String() + "#" + base64.StdEncoding.EncodeToString(contextID),
 								},
 							},
 						},
@@ -179,7 +180,7 @@ func TestDDBStore_Put(t *testing.T) {
 							return false
 						}
 
-						expectedValueKey := providerID.String() + "/" + string(contextID)
+						expectedValueKey := providerID.String() + "#" + base64.StdEncoding.EncodeToString(contextID)
 						for i, req := range reqs {
 							if req.PutRequest == nil {
 								return false

@@ -2,6 +2,7 @@ package dynamodb
 
 import (
 	"context"
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"strings"
@@ -126,21 +127,20 @@ func (s *ddbStore) Get(mh multihash.Multihash) ([]indexer.Value, bool, error) {
 	// Prepare batch get items request for providersTable
 	var keys []map[string]types.AttributeValue
 	for _, item := range result.Items {
-		// ValueKey is in the format "providerID/contextID"
 		valueKey, ok := item[fieldValueKey].(*types.AttributeValueMemberS)
 		if !ok || valueKey == nil {
 			continue
 		}
 
-		// Split the ValueKey to get providerID and contextID
-		parts := strings.SplitN(valueKey.Value, "/", 2)
-		if len(parts) != 2 {
-			continue
+		// Extract providerID and contextID from the valueKey
+		providerID, contextID, err := fromValueKey(valueKey.Value)
+		if err != nil {
+			return nil, false, fmt.Errorf("failed to get providerID and contextID from valueKey: %w", err)
 		}
 
 		keys = append(keys, map[string]types.AttributeValue{
-			fieldProviderID: &types.AttributeValueMemberS{Value: parts[0]},
-			fieldContextID:  &types.AttributeValueMemberB{Value: []byte(parts[1])},
+			fieldProviderID: &types.AttributeValueMemberS{Value: providerID},
+			fieldContextID:  &types.AttributeValueMemberB{Value: contextID},
 		})
 	}
 
@@ -185,6 +185,25 @@ func (s *ddbStore) Get(mh multihash.Multihash) ([]indexer.Value, bool, error) {
 	return values, len(values) > 0, nil
 }
 
+func fromValueKey(valueKey string) (string, []byte, error) {
+	parts := strings.SplitN(valueKey, "#", 2)
+	if len(parts) != 2 {
+		return "", nil, fmt.Errorf("invalid value key format: got %d parts, expected 2", len(parts))
+	}
+
+	providerID := parts[0]
+	contextID, err := base64.StdEncoding.DecodeString(parts[1])
+	if err != nil {
+		return "", nil, err
+	}
+
+	return providerID, contextID, nil
+}
+
+func toValueKey(providerID string, contextID []byte) string {
+	return providerID + "#" + base64.StdEncoding.EncodeToString(contextID)
+}
+
 // Put implements indexer.Interface.Put
 func (s *ddbStore) Put(v indexer.Value, mhs ...multihash.Multihash) error {
 	// First, update or create the provider record
@@ -208,8 +227,8 @@ func (s *ddbStore) Put(v indexer.Value, mhs ...multihash.Multihash) error {
 	// Prepare batch write items for multihashes mapping
 	writeRequests := make([]types.WriteRequest, 0, len(mhs))
 	for _, mh := range mhs {
-		// Create a composite sort key: "providerID/contextID"
-		valueKey := v.ProviderID.String() + "/" + string(v.ContextID)
+		// Create a composite sort key
+		valueKey := toValueKey(v.ProviderID.String(), v.ContextID)
 
 		writeRequests = append(writeRequests, types.WriteRequest{
 			PutRequest: &types.PutRequest{
@@ -270,7 +289,7 @@ func (s *ddbStore) Remove(v indexer.Value, mhs ...multihash.Multihash) error {
 	}
 
 	// Create the value key that we'll be removing
-	valueKey := v.ProviderID.String() + "/" + string(v.ContextID)
+	valueKey := toValueKey(v.ProviderID.String(), v.ContextID)
 
 	// Prepare batch delete requests
 	deleteRequests := make([]types.WriteRequest, 0, len(mhs))
