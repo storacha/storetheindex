@@ -3,19 +3,20 @@ package config
 // Datastore tracks the configuration of the datastore.
 type Datastore struct {
 	// Type is the type of datastore.
-	// Currently, only "levelds" and "dynamodb" are supported.
+	// Currently, only "levelds", "dynamodb" and "s3" are supported.
 	Type string
 	// Dir is the directory where the datastore is kept. If this is not an
 	// absolute path then the location is relative to the indexer repo
 	// directory.
 	// For datastores of type "dynamodb", this is the name of the table.
+	// For datastores of type "s3", this is the name of the bucket.
 	Dir string
 	// Region is the region where the datastore is kept. This is only used for
-	// datastores of type "dynamodb".
+	// datastores of types "dynamodb" and "s3".
 	Region string
 
 	// TmpType is the type of datastore for temporary persisted data.
-	// Currently, only "levelds" and "dynamodb" are supported.
+	// Currently, only "levelds", "dynamodb" and "s3" are supported.
 	// Use "none" to disable the tmp datastore. The tmp datastore is used by the ingest
 	// service, so it should also be disabled if the tmp datastore is disabled.
 	TmpType string
@@ -24,13 +25,14 @@ type Datastore struct {
 	// advertisement data and data-transfer session state. If this is not an
 	// absolute path then the location is relative to the indexer repo.
 	// For datastores of type "dynamodb", this is the name of the temporary items table.
+	// For datastores of type "s3", this is the name of the temporary items bucket.
 	TmpDir string
 	// TmpRegion is the region where the datastore is kept. This is only used for
-	// datastores of type "dynamodb".
+	// datastores of types "dynamodb" and "s3".
 	TmpRegion string
 
 	// RemoveTmpAtStart causes all temproary data to be removed at startup.
-	// Not applicable to DynamoDB-backed datastores.
+	// Not applicable to DynamoDB- and S3-backed datastores.
 	RemoveTmpAtStart bool
 }
 

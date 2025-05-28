@@ -18,6 +18,7 @@ import (
 	leveldb "github.com/ipfs/go-ds-leveldb"
 	"github.com/ipni/storetheindex/config"
 	"github.com/ipni/storetheindex/fsutil"
+	s3ds "github.com/storacha/go-libstoracha/datastore/s3"
 )
 
 const (
@@ -47,6 +48,8 @@ func createDS(ctx context.Context, dsType, dirOrTable, region string, rmExisting
 		return createLevelDBDatastore(ctx, dirOrTable, rmExisting)
 	case "dynamodb":
 		return createDynamoDBDatastore(ctx, dirOrTable, region)
+	case "s3":
+		return createS3Datastore(ctx, dirOrTable, region)
 	default:
 		return nil, "", fmt.Errorf("only levelds and dynamodb datastore types supported, %q not supported", dsType)
 	}
@@ -80,6 +83,16 @@ func createDynamoDBDatastore(ctx context.Context, tableName, tableRegion string)
 	ds := dynamods.New(c, tableName)
 
 	return ds, tableName, nil
+}
+
+func createS3Datastore(ctx context.Context, bucketName, bucketRegion string) (datastore.Batching, string, error) {
+	cfg := s3ds.Config{Bucket: bucketName, Region: bucketRegion}
+	ds, err := s3ds.NewS3Datastore(cfg)
+	if err != nil {
+		return nil, "", err
+	}
+
+	return ds, bucketName, nil
 }
 
 func cleanupDTTempData(ctx context.Context, ds datastore.Batching) error {
