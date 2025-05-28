@@ -58,35 +58,12 @@ module "app" {
   create_db = false
   # enter secret values your app will use here -- these will be available
   # as env vars in the container at runtime
-  secrets = { 
-  }
+  secrets = {}
   # enter any sqs queues you want to create here
   queues = []
-  caches = [  ]
-  topics = [  ]
+  caches = []
+  topics = []
   tables = [
-    {
-      name = "datastore"
-      attributes = [
-        {
-          name = "DSKey"
-          type = "S"
-        },
-      ]
-      hash_key = "DSKey"
-    },
-  
-    {
-      name = "tmp-datastore"
-      attributes = [
-        {
-          name = "DSKey"
-          type = "S"
-        },
-      ]
-      hash_key = "DSKey"
-    },
-  
     {
       name = "valuestore-providers"
       attributes = [
@@ -103,7 +80,6 @@ module "app" {
       hash_key = "ProviderID"
       range_key ="ContextID"
     },
-  
     {
       name = "valuestore-multihash-map"
       attributes = [
@@ -121,7 +97,16 @@ module "app" {
       range_key ="ValueKey"
     },
   ]
-  buckets = []
+  buckets = [
+    {
+      name = "datastore"
+      public = false
+    },
+    {
+      name = "tmp-datastore"
+      public = false
+    },
+  ]
   providers = {
     aws = aws
     aws.acm = aws.acm
