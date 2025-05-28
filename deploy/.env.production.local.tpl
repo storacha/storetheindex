@@ -70,10 +70,7 @@ PREFIX="${TF_WORKSPACE}-${TF_VAR_app}"
     "Level": "info",
       "Loggers": {
       "basichost": "warn",
-      "bootstrap": "warn",
-      "dt-impl": "warn",
-      "dt_graphsync": "warn",
-      "graphsync": "warn"
+      "bootstrap": "warn"
     }
   },
   "Peering": {
