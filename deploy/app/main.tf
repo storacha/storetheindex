@@ -40,7 +40,7 @@ provider "aws" {
 }
 
 module "app" {
-  source = "github.com/storacha/storoku//app?ref=v0.2.32"
+  source = "github.com/storacha/storoku//app?ref=v0.2.33"
   private_key = var.private_key
   private_key_env_var = "STORETHEINDEX_PRIV_KEY"
   httpport = 3000
@@ -131,5 +131,6 @@ module "ingest" {
   env_files = var.ingest_env_files
   env_files_bucket_id = module.app.env_files.bucket_id
   secrets = module.app.secrets
+  buckets = module.app.buckets
   tables = module.app.tables
 }

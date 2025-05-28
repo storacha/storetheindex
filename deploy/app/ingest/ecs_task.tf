@@ -55,6 +55,10 @@ resource "aws_ecs_task_definition" "ingest" {
         startPeriod = 10
       } : null
       environment = concat(var.env_vars,
+        [ for key, bucket in var.buckets : {
+          name = "${upper(key)}_BUCKET_NAME"
+          value = bucket.bucket
+        }],
         [ for key, table in var.tables : {
           name = "${upper(key)}_TABLE_ID"
           value = table.id
