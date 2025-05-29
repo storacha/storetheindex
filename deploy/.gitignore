@@ -1,3 +1,5 @@
+# storoku:ignore
+
 # Deployment
 .env.production.local
 .env.ingest.production.local

@@ -10,31 +10,18 @@
   "caches": null,
   "topics": null,
   "queues": null,
-  "buckets": null,
-  "secrets": null,
-  "tables": [
+  "buckets": [
     {
       "name": "datastore",
-      "attributes": [
-        {
-          "name": "DSKey",
-          "type": "S"
-        }
-      ],
-      "hashKey": "DSKey",
-      "rangeKey": ""
+      "public": false
     },
     {
       "name": "tmp-datastore",
-      "attributes": [
-        {
-          "name": "DSKey",
-          "type": "S"
-        }
-      ],
-      "hashKey": "DSKey",
-      "rangeKey": ""
-    },
+      "public": false
+    }
+  ],
+  "secrets": null,
+  "tables": [
     {
       "name": "valuestore-providers",
       "attributes": [

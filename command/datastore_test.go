@@ -57,6 +57,16 @@ func TestCreateDS(t *testing.T) {
 		require.NotNil(t, ds)
 		require.NoError(t, ds.Close())
 	})
+
+	t.Run("s3", func(t *testing.T) {
+		bucketName := "some-bucket"
+		region := "some-region"
+
+		ds, _, err := createDS(context.Background(), "s3", bucketName, region, false)
+		require.NoError(t, err)
+		require.NotNil(t, ds)
+		require.NoError(t, ds.Close())
+	})
 }
 
 func TestDeletePrefix(t *testing.T) {

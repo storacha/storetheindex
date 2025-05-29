@@ -116,3 +116,10 @@ variable "tables" {
     arn = string
   }))
 }
+
+variable "buckets" {
+  type = map(object({
+    arn = string
+    bucket = string
+  }))
+}

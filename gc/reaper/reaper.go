@@ -616,7 +616,8 @@ func (r *Reaper) makeSubscriber(dstoreTmp datastore.Batching) (*dagsync.Subscrib
 		}, nil
 	}
 
-	return dagsync.NewSubscriber(r.host, dstoreTmp, linksys, r.topic,
+	return dagsync.NewSubscriber(r.host, linksys,
+		dagsync.RecvAnnounce(r.topic),
 		dagsync.HttpTimeout(r.httpTimeout),
 		dagsync.SegmentDepthLimit(int64(r.syncSegSize)))
 }

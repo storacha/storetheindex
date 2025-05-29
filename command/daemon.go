@@ -664,8 +664,8 @@ func loadConfig(filePath string) (*config.Config, error) {
 		log.Warn("Configuration file out-of-date. Upgrade by running: storetheindex init --upgrade")
 	}
 
-	if cfg.Datastore.Type != "levelds" && cfg.Datastore.Type != "dynamodb" {
-		return nil, fmt.Errorf("only levelds and dynamodb datastore types supported, %q not supported", cfg.Datastore.Type)
+	if cfg.Datastore.Type != "levelds" && cfg.Datastore.Type != "dynamodb" && cfg.Datastore.Type != "s3" {
+		return nil, fmt.Errorf("only \"levelds\", \"dynamodb\" and \"s3\" datastore types supported, %q not supported", cfg.Datastore.Type)
 	}
 
 	return cfg, nil

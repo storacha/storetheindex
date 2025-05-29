@@ -1,5 +1,5 @@
 <%
-TABLE_PREFIX="${TF_WORKSPACE}-${TF_VAR_app}"
+PREFIX="${TF_WORKSPACE}-${TF_VAR_app}"
 
 ! IFS='' read -r -d '' Config <<EOC
 {
@@ -33,11 +33,11 @@ TABLE_PREFIX="${TF_WORKSPACE}-${TF_VAR_app}"
     "MinimumPeers": 4
   },
   "Datastore": {
-    "Type": "dynamodb",
-    "Dir": "${TABLE_PREFIX}-datastore",
+    "Type": "s3",
+    "Dir": "${PREFIX}-datastore",
     "Region": "$TF_VAR_region",
-    "TmpType": "dynamodb",
-    "TmpDir": "${TABLE_PREFIX}-tmp-datastore",
+    "TmpType": "s3",
+    "TmpDir": "${PREFIX}-tmp-datastore",
     "TmpRegion": "$TF_VAR_region"
   },
   "Discovery": {
@@ -61,8 +61,8 @@ TABLE_PREFIX="${TF_WORKSPACE}-${TF_VAR_app}"
     "ShutdownTimeout": "15m",
     "ValueStoreType": "dynamodb",
     "DynamoDBRegion": "$TF_VAR_region",
-    "DynamoDBProvidersTable": "${TABLE_PREFIX}-valuestore-providers",
-    "DynamoDBMultihashMapTable": "${TABLE_PREFIX}-valuestore-multihash-map",
+    "DynamoDBProvidersTable": "${PREFIX}-valuestore-providers",
+    "DynamoDBMultihashMapTable": "${PREFIX}-valuestore-multihash-map",
     "FreezeAtPercent": -1
   },
   "Ingest": {
@@ -82,10 +82,7 @@ TABLE_PREFIX="${TF_WORKSPACE}-${TF_VAR_app}"
     "Level": "info",
       "Loggers": {
       "basichost": "warn",
-      "bootstrap": "warn",
-      "dt-impl": "warn",
-      "dt_graphsync": "warn",
-      "graphsync": "warn"
+      "bootstrap": "warn"
     }
   },
   "Peering": {
