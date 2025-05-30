@@ -122,7 +122,7 @@ module "ingest" {
   vpc = module.app.vpc
   ecs_cluster = module.app.ecs_infra.ecs_cluster
   ecs_log_group = module.app.ecs_infra.aws_cloudwatch_log_group
-  find_task_family = module.app.deployment.task_definition.family
+  find_task = module.app.deployment.task_definition
   lb_listener = module.app.ecs_infra.lb_listener
   lb_security_group = module.app.ecs_infra.lb_security_group
   httpport = 3001

@@ -8,9 +8,12 @@ variable "environment" {
   type        = string
 }
 
-variable "find_task_family" {
+variable "find_task" {
   description = "The task family for the find task, so that we can fetch its configuration"
-  type        = string
+  type        = object({
+    family = string
+    revision = string
+  })
 }
 
 variable "httpport" {

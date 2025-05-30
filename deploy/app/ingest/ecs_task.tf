@@ -2,7 +2,10 @@ data "aws_region" "current" {}
 
 # fetch the task definition for the find service to inherit its config
 data "aws_ecs_task_definition" "find" {
-  task_definition = var.find_task_family
+  # this weird conditional is a workaround to avoid terraform failing when the find task doesn't exist (either it
+  # hasn't been deployed yet or it was deleted). The reference to the revision makes this data block dependent on
+  # the find task existing. See https://github.com/hashicorp/terraform-provider-aws/pull/10247
+  task_definition = var.find_task.revision ? var.find_task.family : var.find_task.family
 }
 
 locals {
