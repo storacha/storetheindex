@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"slices"
 	"testing"
 	"time"
 
@@ -989,7 +990,7 @@ func TestProviderReload(t *testing.T) {
 	value, err := json.Marshal(pInfo)
 	require.NoError(t, err)
 
-	err = ds.Put(ctx, pInfo.dsKey(), value)
+	err = ds.Put(ctx, pInfo.dsKey(), slices.Clone(value))
 	require.NoError(t, err)
 
 	err = ds.Sync(ctx, pInfo.dsKey())
