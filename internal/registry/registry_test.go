@@ -966,6 +966,41 @@ func TestIgnoreBadAds(t *testing.T) {
 	require.True(t, r.Allowed(pubID), "publisher should be not allowed")
 }
 
+func TestProviderReload(t *testing.T) {
+	ctx := context.Background()
+	ds := datastore.NewMapDatastore()
+	r, err := New(ctx, config.Discovery{ProviderReloadInterval: config.Duration(1 * time.Second)}, ds)
+	require.NoError(t, err)
+	t.Cleanup(func() { r.Close() })
+
+	providers := r.AllProviderInfo()
+	require.Equal(t, 0, len(providers))
+
+	provID, err := peer.Decode(publisherID)
+	require.NoError(t, err)
+	maddr, err := multiaddr.NewMultiaddr(publisherAddr)
+	require.NoError(t, err)
+	pAddrInfo := peer.AddrInfo{
+		ID:    provID,
+		Addrs: []multiaddr.Multiaddr{maddr},
+	}
+	pInfo := &ProviderInfo{AddrInfo: pAddrInfo}
+
+	value, err := json.Marshal(pInfo)
+	require.NoError(t, err)
+
+	err = ds.Put(ctx, pInfo.dsKey(), value)
+	require.NoError(t, err)
+
+	err = ds.Sync(ctx, pInfo.dsKey())
+	require.NoError(t, err)
+
+	require.Eventually(t, func() bool {
+		providers = r.AllProviderInfo()
+		return len(providers) == 1
+	}, 5*time.Second, time.Second)
+}
+
 func writeJsonResponse(w http.ResponseWriter, status int, body []byte) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(status)

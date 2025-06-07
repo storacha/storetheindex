@@ -42,6 +42,9 @@ type Discovery struct {
 	DeactivateAfter Duration
 	// PollOverrides configures polling for specific providers.
 	PollOverrides []Polling
+	// ProviderReloadInterval is the amount of time to wait between reloading
+	// providers from the datastore. Set to 0 to disable periodic reloading.
+	ProviderReloadInterval Duration
 	// RemoveOldAssignments, if true, removes persisted assignments of previous
 	// versions. When false, previous versions of persisted assignments are
 	// migrated. Only applies if UseAssigner is true.
