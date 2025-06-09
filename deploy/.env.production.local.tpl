@@ -49,10 +49,7 @@ PREFIX="${TF_WORKSPACE}-${TF_VAR_app}"
       "Publish": true,
       "PublishExcept": null
     },
-    "PollInterval": "24h0m0s",
-    "PollRetryAfter": "5h0m0s",
-    "PollStopAfter": "168h0m0s",
-    "PollOverrides": null,
+    "PollInterval": "0",
     "UseAssigner": false
   },
   "Indexer": {
