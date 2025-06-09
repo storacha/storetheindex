@@ -1121,6 +1121,7 @@ func (r *Registry) periodicProviderReload(interval time.Duration) {
 			providers, err := loadPersistedProviders(context.Background(), r.dstore, r.filterIPs)
 			if err != nil {
 				log.Errorw("cannot reload provider data from datastore", "err", err)
+				return
 			}
 
 			r.provMutex.Lock()
