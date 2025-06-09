@@ -1118,14 +1118,13 @@ func (r *Registry) periodicProviderReload(interval time.Duration) {
 		case <-r.closing:
 			return
 		case <-ticker.C:
-			r.provMutex.Lock()
-
-			var err error
-			r.providers, err = loadPersistedProviders(context.Background(), r.dstore, r.filterIPs)
+			providers, err := loadPersistedProviders(context.Background(), r.dstore, r.filterIPs)
 			if err != nil {
 				log.Errorw("cannot reload provider data from datastore", "err", err)
 			}
 
+			r.provMutex.Lock()
+			r.providers = providers
 			r.provMutex.Unlock()
 		}
 	}
