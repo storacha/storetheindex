@@ -6,12 +6,12 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
-	"slices"
 	"testing"
 	"time"
 
 	"github.com/ipfs/go-cid"
 	"github.com/ipfs/go-datastore"
+	dssync "github.com/ipfs/go-datastore/sync"
 	leveldb "github.com/ipfs/go-ds-leveldb"
 	"github.com/ipfs/go-test/random"
 	"github.com/ipni/go-libipni/find/model"
@@ -969,7 +969,7 @@ func TestIgnoreBadAds(t *testing.T) {
 
 func TestProviderReload(t *testing.T) {
 	ctx := context.Background()
-	ds := datastore.NewMapDatastore()
+	ds := dssync.MutexWrap(datastore.NewMapDatastore())
 	r, err := New(ctx, config.Discovery{ProviderReloadInterval: config.Duration(1 * time.Second)}, ds)
 	require.NoError(t, err)
 	t.Cleanup(func() { r.Close() })
@@ -990,7 +990,7 @@ func TestProviderReload(t *testing.T) {
 	value, err := json.Marshal(pInfo)
 	require.NoError(t, err)
 
-	err = ds.Put(ctx, pInfo.dsKey(), slices.Clone(value))
+	err = ds.Put(ctx, pInfo.dsKey(), value)
 	require.NoError(t, err)
 
 	err = ds.Sync(ctx, pInfo.dsKey())
