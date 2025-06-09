@@ -44,6 +44,13 @@ type Discovery struct {
 	PollOverrides []Polling
 	// ProviderReloadInterval is the amount of time to wait between reloading
 	// providers from the datastore. Set to 0 to disable periodic reloading.
+	//
+	// This setting should only be used when find and ingest task run as separate
+	// processes. Provider state is kept updated by the ingester, which serves the
+	// requests from providers. Find tasks only read from the datastore when they
+	// start. This setting allows find tasks to go back to persistent storage to
+	// get an up-to-date image of the state of providers.
+	// It should always be set to 0 (disabled) for ingest tasks
 	ProviderReloadInterval Duration
 	// RemoveOldAssignments, if true, removes persisted assignments of previous
 	// versions. When false, previous versions of persisted assignments are
