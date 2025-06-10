@@ -53,6 +53,7 @@ PREFIX="${TF_WORKSPACE}-${TF_VAR_app}"
     "PollRetryAfter": "5h0m0s",
     "PollStopAfter": "168h0m0s",
     "PollOverrides": null,
+    "ProviderReloadInterval": "0",
     "UseAssigner": false
   },
   "Indexer": {

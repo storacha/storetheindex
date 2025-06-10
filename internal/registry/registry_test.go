@@ -11,6 +11,7 @@ import (
 
 	"github.com/ipfs/go-cid"
 	"github.com/ipfs/go-datastore"
+	dssync "github.com/ipfs/go-datastore/sync"
 	leveldb "github.com/ipfs/go-ds-leveldb"
 	"github.com/ipfs/go-test/random"
 	"github.com/ipni/go-libipni/find/model"
@@ -964,6 +965,41 @@ func TestIgnoreBadAds(t *testing.T) {
 	err = r.Update(ctx, provider, publisher, cid.Undef, nil, 0)
 	require.NoError(t, err)
 	require.True(t, r.Allowed(pubID), "publisher should be not allowed")
+}
+
+func TestProviderReload(t *testing.T) {
+	ctx := context.Background()
+	ds := dssync.MutexWrap(datastore.NewMapDatastore())
+	r, err := New(ctx, config.Discovery{ProviderReloadInterval: config.Duration(1 * time.Second)}, ds)
+	require.NoError(t, err)
+	t.Cleanup(func() { r.Close() })
+
+	providers := r.AllProviderInfo()
+	require.Equal(t, 0, len(providers))
+
+	provID, err := peer.Decode(publisherID)
+	require.NoError(t, err)
+	maddr, err := multiaddr.NewMultiaddr(publisherAddr)
+	require.NoError(t, err)
+	pAddrInfo := peer.AddrInfo{
+		ID:    provID,
+		Addrs: []multiaddr.Multiaddr{maddr},
+	}
+	pInfo := &ProviderInfo{AddrInfo: pAddrInfo}
+
+	value, err := json.Marshal(pInfo)
+	require.NoError(t, err)
+
+	err = ds.Put(ctx, pInfo.dsKey(), value)
+	require.NoError(t, err)
+
+	err = ds.Sync(ctx, pInfo.dsKey())
+	require.NoError(t, err)
+
+	require.Eventually(t, func() bool {
+		providers = r.AllProviderInfo()
+		return len(providers) == 1
+	}, 5*time.Second, time.Second)
 }
 
 func writeJsonResponse(w http.ResponseWriter, status int, body []byte) {

@@ -353,6 +353,10 @@ func New(ctx context.Context, cfg config.Discovery, dstore datastore.Datastore, 
 
 	go r.runTmpBlockCheck()
 
+	if cfg.ProviderReloadInterval != 0 {
+		go r.periodicProviderReload(time.Duration(cfg.ProviderReloadInterval))
+	}
+
 	return r, nil
 }
 
@@ -1104,6 +1108,27 @@ func (r *Registry) SetMaxPoll(maxPoll int) {
 
 func (r *Registry) CheckSequence(peerID peer.ID, seq uint64) error {
 	return r.sequences.check(peerID, seq)
+}
+
+// periodicProviderReload reloads the registry's providers from the datastore.
+func (r *Registry) periodicProviderReload(interval time.Duration) {
+	ticker := time.NewTicker(interval)
+	for {
+		select {
+		case <-r.closing:
+			return
+		case <-ticker.C:
+			providers, err := loadPersistedProviders(context.Background(), r.dstore, r.filterIPs)
+			if err != nil {
+				log.Errorw("cannot reload provider data from datastore", "err", err)
+				return
+			}
+
+			r.provMutex.Lock()
+			r.providers = providers
+			r.provMutex.Unlock()
+		}
+	}
 }
 
 // Freeze puts the indexer into forzen mode.
