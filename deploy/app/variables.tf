@@ -52,3 +52,9 @@ variable "domain_base" {
   type = string
   default = ""
 }
+
+variable "network" {
+  description = "The network to use (defaults to the default 'hot' network)"
+  type        = string
+  default     = "hot"
+}
