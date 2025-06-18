@@ -40,7 +40,7 @@ provider "aws" {
 }
 
 module "app" {
-  source = "github.com/storacha/storoku//app?ref=v0.2.38"
+  source = "github.com/storacha/storoku//app?ref=2507eceb9fadf577012c96466d70f8b567cad13c"
   private_key = var.private_key
   private_key_env_var = "STORETHEINDEX_PRIV_KEY"
   httpport = 3000
