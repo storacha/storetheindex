@@ -12,6 +12,7 @@ terraform {
   }
   backend "s3" {
     bucket = "storacha-terraform-state"
+    key = "storacha/${var.app}/terraform.tfstate"
     region = "us-west-2"
     encrypt = true
   }
@@ -40,7 +41,7 @@ provider "aws" {
 }
 
 module "app" {
-  source = "github.com/storacha/storoku//app?ref=2507eceb9fadf577012c96466d70f8b567cad13c"
+  source = "github.com/storacha/storoku//app?ref=v0.2.42"
   private_key = var.private_key
   private_key_env_var = "STORETHEINDEX_PRIV_KEY"
   httpport = 3000
