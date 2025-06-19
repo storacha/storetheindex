@@ -36,7 +36,7 @@ module "shared" {
   source = "github.com/storacha/storoku//shared?ref=v0.2.42"
   create_db = false
   caches = []
-  networks = ["warm",]
+  networks = ["warm"]
   app = var.app
   zone_id = var.cloudflare_zone_id
   domain_base = var.domain_base
