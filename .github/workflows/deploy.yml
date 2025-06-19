@@ -40,6 +40,7 @@ jobs:
     with:
       env: warm-staging
       workspace: warm-staging
+      network: warm
       did: did:web:staging.ipni.warm.storacha.network
       apply: ${{ github.event_name != 'pull_request' }}
     secrets:

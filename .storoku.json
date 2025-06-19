@@ -53,5 +53,8 @@
       "rangeKey": "ValueKey"
     }
   ],
+  "networks": [
+    "warm"
+  ],
   "writeToContainer": true
 }

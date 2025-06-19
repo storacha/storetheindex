@@ -10,19 +10,15 @@ else
 endif
 
 ECR_URI=$(TF_VAR_allowed_account_id).dkr.ecr.us-west-2.amazonaws.com
-REPLICATED_ECR_URI=$(TF_VAR_allowed_account_id).dkr.ecr.$(TF_VAR_region).amazonaws.com
 IMAGE_TAG_BASE=$(ECR_URI)/$(TF_VAR_app)-ecr:$(TF_WORKSPACE)
-REPLICATED_IMAGE_TAG_BASE=$(REPLICATED_ECR_URI)/$(TF_VAR_app)-ecr:$(TF_WORKSPACE)
 
 # This is a hack to eval the image tag only when it's a dependency, cause we don't want to set it until docker builds
 get_image_tag = IMAGE_TAG = $$(IMAGE_TAG_BASE)-$$(shell docker inspect --format $$(format-filter) $$(IMAGE_TAG_BASE)-latest | sed -e 's/sha256://g')
-get_replicated_image_tag = REPLICATED_IMAGE_TAG = $$(REPLICATED_IMAGE_TAG_BASE)-$$(shell docker inspect --format $$(format-filter) $$(IMAGE_TAG_BASE)-latest | sed -e 's/sha256://g')
 
 .PHONY: eval_image_tag
 
 eval_image_tag:
 	$(eval $(get_image_tag))
-	$(eval $(get_replicated_image_tag))
 
 # GET the absolute location for .env.production.local, again, only after it exists
 
@@ -64,7 +60,7 @@ docker-push: docker-tag eval_image_tag
 .PHONY: clean-terraform
 
 clean-terraform: eval_image_tag
-	tofu -chdir=app destroy -var="image_tag=$(REPLICATED_IMAGE_TAG)" 
+	tofu -chdir=app destroy -var="image_tag=$(IMAGE_TAG)" 
 
 .PHONY: clean-shared
 
@@ -76,10 +72,10 @@ clean-shared:
 clean: clean-terraform clean-shared
 
 app/.terraform:
-	TF_WORKSPACE=default tofu -chdir=app init -backend-config="key=storacha/$(TF_VAR_app)/terraform.tfstate"
+	TF_WORKSPACE=default tofu -chdir=app init
 
 shared/.terraform:
-	TF_WORKSPACE=default tofu -chdir=shared init -backend-config="key=storacha/$(TF_VAR_app)/shared.tfstate"
+	TF_WORKSPACE=default tofu -chdir=shared init
 
 .tfworkspace:
 	tofu -chdir=app workspace new $(TF_WORKSPACE) 
@@ -92,12 +88,12 @@ init: app/.terraform shared/.terraform .tfworkspace
 .PHONY: upgrade-shared
 
 upgrade-shared:
-	TF_WORKSPACE=default tofu -chdir=shared init --upgrade -backend-config="key=storacha/$(TF_VAR_app)/shared.tfstate"
+	TF_WORKSPACE=default tofu -chdir=shared init --upgrade
 
 .PHONY: upgrade-app
 
 upgrade-app: upgrade-shared
-	tofu -chdir=app init -upgrade -backend-config="key=storacha/$(TF_VAR_app)/terraform.tfstate"
+	tofu -chdir=app init -upgrade
 
 .PHONY: upgrade
 upgrade: upgrade-shared upgrade-app
@@ -119,12 +115,12 @@ validate: validate-shared validate-app
 .PHONY: plan-shared
 
 plan-shared: shared/.terraform
-	tofu -chdir=shared plan
+	TF_WORKSPACE=default tofu -chdir=shared plan
 
 .PHONY: plan-app
 
 plan-app: app/.terraform .tfworkspace eval_image_tag eval_env_file eval_ingest_env_file
-	tofu -chdir=app plan -var="image_tag=$(REPLICATED_IMAGE_TAG)" -var='env_files=["$(ENV_FILE)"]' -var='ingest_env_files=["$(INGEST_ENV_FILE)"]'
+	tofu -chdir=app plan -var="image_tag=$(IMAGE_TAG)" -var='env_files=["$(ENV_FILE)"]' -var='ingest_env_files=["$(INGEST_ENV_FILE)"]'
 
 .PHONY: plan
 
@@ -137,27 +133,24 @@ APPLY_ARGS=""
 endif
 
 .PHONY: apply-shared
-
 apply-shared: shared/.terraform
 	TF_WORKSPACE=default tofu -chdir=shared apply $(APPLY_ARGS)
 
 .PHONY: apply-app
 
 apply-app: app/.terraform .tfworkspace docker-push eval_image_tag eval_env_file eval_ingest_env_file
-	tofu -chdir=app apply -var="image_tag=$(REPLICATED_IMAGE_TAG)" -var='env_files=["$(ENV_FILE)"]' -var='ingest_env_files=["$(INGEST_ENV_FILE)"]' $(APPLY_ARGS)
+	tofu -chdir=app apply -var="image_tag=$(IMAGE_TAG)" -var='env_files=["$(ENV_FILE)"]' -var='ingest_env_files=["$(INGEST_ENV_FILE)"]' $(APPLY_ARGS)
 
 .PHONY: apply
-
 apply: apply-shared apply-app
 
 .PHONY: console-shared
-
 console-shared: shared/.terraform
-	TF_WORKSPACE=default tofu -chdir=shared console $(APPLY_ARGS)
+	TF_WORKSPACE=default tofu -chdir=shared console
 
-.PHONY: console-app
+.PHONY: console
 console: app/.terraform .tfworkspace eval_image_tag eval_env_file eval_ingest_env_file
-	tofu -chdir=app console -var="image_tag=$(REPLICATED_IMAGE_TAG)" -var='env_files=["$(ENV_FILE)"]' -var='ingest_env_files=["$(INGEST_ENV_FILE)"]' $(APPLY_ARGS)
+	tofu -chdir=app console -var="image_tag=$(IMAGE_TAG)" -var='env_files=["$(ENV_FILE)"]' -var='ingest_env_files=["$(INGEST_ENV_FILE)"]'
 
 .PHONY: wait-deploy
 wait-deploy:

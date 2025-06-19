@@ -11,7 +11,7 @@ terraform {
   }
   backend "s3" {
     bucket = "storacha-terraform-state"
-   
+    key = "storacha/${var.app}/shared.tfstate"
     region = "us-west-2"
     encrypt = true
   }
@@ -33,9 +33,10 @@ provider "aws" {
 }
 
 module "shared" {
-  source = "github.com/storacha/storoku//shared?ref=v0.2.38"
+  source = "github.com/storacha/storoku//shared?ref=v0.2.43"
   create_db = false
   caches = []
+  networks = ["warm"]
   app = var.app
   zone_id = var.cloudflare_zone_id
   domain_base = var.domain_base

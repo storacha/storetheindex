@@ -12,6 +12,7 @@ terraform {
   }
   backend "s3" {
     bucket = "storacha-terraform-state"
+    key = "storacha/${var.app}/terraform.tfstate"
     region = "us-west-2"
     encrypt = true
   }
@@ -40,7 +41,7 @@ provider "aws" {
 }
 
 module "app" {
-  source = "github.com/storacha/storoku//app?ref=v0.2.38"
+  source = "github.com/storacha/storoku//app?ref=v0.2.43"
   private_key = var.private_key
   private_key_env_var = "STORETHEINDEX_PRIV_KEY"
   httpport = 3000
@@ -50,6 +51,7 @@ module "app" {
   appState = var.app
   write_to_container = true
   environment = terraform.workspace
+  network = var.network
   # if there are any env vars you want available only to your container
   # in the vpc as opposed to set in the dockerfile, enter them here
   # NOTE: do not put sensitive data in env-vars. use secrets
