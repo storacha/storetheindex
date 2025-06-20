@@ -159,3 +159,4 @@ console: app/.terraform .tfworkspace eval_image_tag eval_env_file eval_ingest_en
 .PHONY: wait-deploy
 wait-deploy:
 	aws deploy wait deployment-successful --region $(TF_VAR_region) --deployment-id $(shell aws deploy list-deployments --region $(TF_VAR_region) --deployment-group-name $(TF_WORKSPACE)-$(TF_VAR_app)-code-deploy-deployment-group --application-name $(TF_WORKSPACE)-$(TF_VAR_app)-code-deploy-app --query "deployments[0]" --output text)
+	aws deploy wait deployment-successful --region $(TF_VAR_region) --deployment-id $(shell aws deploy list-deployments --region $(TF_VAR_region) --deployment-group-name $(TF_WORKSPACE)-$(TF_VAR_app)-ingest-code-deploy-deployment-group --application-name $(TF_WORKSPACE)-$(TF_VAR_app)-ingest-code-deploy-app --query "deployments[0]" --output text)
