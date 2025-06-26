@@ -11,6 +11,7 @@ import (
 
 	pbl "github.com/cockroachdb/pebble"
 	"github.com/cockroachdb/pebble/bloom"
+	"github.com/honeycombio/otel-config-go/otelconfig"
 	"github.com/ipfs/boxo/bootstrap"
 	"github.com/ipfs/boxo/peering"
 	logging "github.com/ipfs/go-log/v2"
@@ -31,12 +32,14 @@ import (
 	httpfind "github.com/ipni/storetheindex/server/find"
 	httpingest "github.com/ipni/storetheindex/server/ingest"
 	"github.com/ipni/storetheindex/store/dynamodb"
+	"github.com/ipni/storetheindex/telemetry"
 	"github.com/ipni/xedni"
 	"github.com/libp2p/go-libp2p"
 	"github.com/libp2p/go-libp2p/core/host"
 	"github.com/libp2p/go-libp2p/core/network"
 	"github.com/multiformats/go-multiaddr"
 	"github.com/urfave/cli/v2"
+	"go.opentelemetry.io/otel/sdk/trace"
 )
 
 // Recognized valuestore type names.
@@ -85,6 +88,20 @@ func daemonAction(cctx *cli.Context) error {
 			os.Exit(1)
 		}
 		return err
+	}
+
+	if cfg.HoneycombAPIKey != "" {
+		shutdownTelemetry, err := telemetry.SetupTelemetry(
+			otelconfig.WithServiceName("storetheindex"),
+			otelconfig.WithExporterEndpoint("https://api.honeycomb.io:443"),
+			otelconfig.WithHeaders(map[string]string{"x-honeycomb-team": cfg.HoneycombAPIKey}),
+			otelconfig.WithSampler(trace.TraceIDRatioBased(0.1)),
+		)
+		if err != nil {
+			return fmt.Errorf("setting up telemetry: %w", err)
+		}
+		defer shutdownTelemetry()
+		log.Info("Telemetry initialized")
 	}
 
 	err = setLoggingConfig(cfg.Logging)

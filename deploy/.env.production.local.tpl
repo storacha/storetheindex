@@ -76,7 +76,8 @@ PREFIX="${TF_WORKSPACE}-${TF_VAR_app}"
   },
   "Peering": {
     "Peers": null
-  }
+  },
+  "HoneycombAPIKey": "$TF_VAR_honeycomb_api_key"
 }
 EOC
 

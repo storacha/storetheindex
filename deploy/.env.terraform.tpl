@@ -8,3 +8,5 @@ TF_VAR_allowed_account_id=505595374361
 TF_VAR_region=us-west-2
 TF_VAR_cloudflare_zone_id=37783d6f032b78cd97ce37ab6fd42848
 CLOUDFLARE_API_TOKEN= # enter a cloudflare api token
+# optional - if you want to enable instrumentation (only Honeycomb is supported for now)
+# TF_VAR_honeycomb_api_key=

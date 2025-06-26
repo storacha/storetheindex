@@ -58,3 +58,9 @@ variable "network" {
   type        = string
   default     = "hot"
 }
+
+variable "honeycomb_api_key" {
+  description = "Ingestion API key to send traces to Honeycomb"
+  type = string
+  default = ""
+}
