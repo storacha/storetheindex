@@ -22,6 +22,7 @@ import (
 	"github.com/ipni/storetheindex/internal/httpserver"
 	"github.com/ipni/storetheindex/internal/metrics"
 	"github.com/ipni/storetheindex/internal/registry"
+	"github.com/ipni/storetheindex/telemetry"
 	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/multiformats/go-multihash"
 	"go.opencensus.io/stats"
@@ -112,11 +113,11 @@ func New(listen string, indexer indexer.Indexer, registry *registry.Registry, op
 			http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 		}
 	})
-	mux.HandleFunc("/cid/", s.findCid)
-	mux.HandleFunc("/multihash/", s.findMultihash)
+	mux.HandleFunc("/cid/", telemetry.InstrumentHTTPHandler(s.findCid, "find CID"))
+	mux.HandleFunc("/multihash/", telemetry.InstrumentHTTPHandler(s.findMultihash, "find Multihash"))
 	mux.HandleFunc("/health", s.health)
-	mux.HandleFunc("/providers", s.listProviders)
-	mux.HandleFunc("/providers/", s.getProvider)
+	mux.HandleFunc("/providers", telemetry.InstrumentHTTPHandler(s.listProviders, "list providers"))
+	mux.HandleFunc("/providers/", telemetry.InstrumentHTTPHandler(s.getProvider, "get provider"))
 	mux.HandleFunc("/stats", s.getStats)
 
 	return s, nil

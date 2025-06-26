@@ -25,11 +25,13 @@ import (
 	"github.com/ipni/storetheindex/internal/metrics"
 	"github.com/ipni/storetheindex/internal/registry"
 	"github.com/ipni/storetheindex/rate"
+	"github.com/ipni/storetheindex/telemetry"
 	"github.com/libp2p/go-libp2p/core/host"
 	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/multiformats/go-multiaddr"
 	"go.opencensus.io/stats"
 	"go.opencensus.io/tag"
+	"go.opentelemetry.io/otel/attribute"
 )
 
 var log = logging.Logger("indexer/ingest")
@@ -389,6 +391,9 @@ func removeProcessedFrozen(ctx context.Context, dstore datastore.Datastore) erro
 // The Context argument controls the lifetime of the sync. Canceling it cancels
 // the sync and causes the multihash channel to close without any data.
 func (ing *Ingester) Sync(ctx context.Context, peerInfo peer.AddrInfo, depth int, resync bool) (cid.Cid, error) {
+	ctx, s := telemetry.StartSpan(ctx, "Ingester.Sync")
+	defer s.End()
+
 	err := peerInfo.ID.Validate()
 	if err != nil {
 		return cid.Undef, errors.New("invalid provider id")
@@ -396,6 +401,8 @@ func (ing *Ingester) Sync(ctx context.Context, peerInfo peer.AddrInfo, depth int
 
 	log := log.With("peer", peerInfo.ID, "addrs", peerInfo.Addrs, "depth", depth, "resync", resync)
 	log.Info("Explicitly syncing the latest advertisement")
+
+	s.SetAttributes(attribute.KeyValue{Key: "peer", Value: attribute.StringValue(peerInfo.String())})
 
 	// Ad chain traversal stops at the latest known head, unless resyncing.
 	var opts []dagsync.SyncOption
@@ -460,6 +467,7 @@ func (ing *Ingester) Sync(ctx context.Context, peerInfo peer.AddrInfo, depth int
 		select {
 		case adProcessedEvent := <-syncDone:
 			log.Debugw("Synced advertisement", "adCid", adProcessedEvent.adCid)
+			s.AddEvent("synced advertisement")
 			if adProcessedEvent.err != nil {
 				// If an error occurred then the adProcessedEvent.adCid will be
 				// the cid that caused the error, and there will not be any

@@ -8,6 +8,7 @@ import (
 	"syscall"
 
 	"github.com/ipni/storetheindex/command"
+	"github.com/ipni/storetheindex/telemetry"
 	"github.com/urfave/cli/v2"
 )
 
@@ -16,12 +17,18 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
+	shutdownTelemetry, err := telemetry.SetupTelemetry()
+	if err != nil {
+		panic(fmt.Errorf("setting up telemetry: %w", err))
+	}
+
 	// Set up a signal handler to cancel the context
 	go func() {
 		interrupt := make(chan os.Signal, 1)
 		signal.Notify(interrupt, syscall.SIGTERM, syscall.SIGINT)
 		select {
 		case <-interrupt:
+			shutdownTelemetry()
 			cancel()
 			fmt.Println("Received interrupt signal, shutting down...")
 			fmt.Println("(Hit ctrl-c again to force-shutdown the daemon.)")
