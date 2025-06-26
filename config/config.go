@@ -15,19 +15,22 @@ import (
 
 // Config is used to load config files.
 type Config struct {
-	Version         int            // config version
-	Identity        Identity       // peer identity
-	Addresses       Addresses      // addresses to listen on
-	Bootstrap       Bootstrap      // Peers to connect to for gossip
-	Datastore       Datastore      // datastore config
-	Discovery       Discovery      // provider pubsub peers
-	Finder          Finder         // finder code configuration
-	Indexer         Indexer        // indexer code configuration
-	ReverseIndexer  ReverseIndexer // reverse indexer configuration
-	Ingest          Ingest         // ingestion related configuration.
-	Logging         Logging        // logging configuration.
-	Peering         Peering        // peering service configuration.
-	HoneycombAPIKey string         // honeycomb opentelementry exporter API access key
+	Version              int            // config version
+	Identity             Identity       // peer identity
+	Addresses            Addresses      // addresses to listen on
+	Bootstrap            Bootstrap      // Peers to connect to for gossip
+	Datastore            Datastore      // datastore config
+	Discovery            Discovery      // provider pubsub peers
+	Finder               Finder         // finder code configuration
+	Indexer              Indexer        // indexer code configuration
+	ReverseIndexer       ReverseIndexer // reverse indexer configuration
+	Ingest               Ingest         // ingestion related configuration.
+	Logging              Logging        // logging configuration.
+	Peering              Peering        // peering service configuration.
+	OTELServiceName      string
+	OTELExporterEndpoint string
+	OTELExporterHeaders  string
+	OTELSamplerRatio     float64
 }
 
 const (

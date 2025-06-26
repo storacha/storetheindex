@@ -77,7 +77,10 @@ PREFIX="${TF_WORKSPACE}-${TF_VAR_app}"
   "Peering": {
     "Peers": null
   },
-  "HoneycombAPIKey": "$TF_VAR_honeycomb_api_key"
+  "OTELServiceName": "$PREFIX",
+	"OTELExporterEndpoint": "https://api.honeycomb.io:443",
+	"OTELExporterHeaders": "x-honeycomb-team=$HONEYCOMB_API_KEY",
+	"OTELSamplerRatio": 0.0001
 }
 EOC
 
