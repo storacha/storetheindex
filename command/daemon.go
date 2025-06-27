@@ -88,7 +88,7 @@ func daemonAction(cctx *cli.Context) error {
 		return err
 	}
 
-	shutdownTelemetry, err := telemetry.SetupTelemetry(cfg)
+	shutdownTelemetry, err := telemetry.SetupTelemetry(cfg.Telemetry)
 	if err != nil {
 		return fmt.Errorf("setting up telemetry: %w", err)
 	}
