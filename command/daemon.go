@@ -31,6 +31,7 @@ import (
 	httpfind "github.com/ipni/storetheindex/server/find"
 	httpingest "github.com/ipni/storetheindex/server/ingest"
 	"github.com/ipni/storetheindex/store/dynamodb"
+	"github.com/ipni/storetheindex/telemetry"
 	"github.com/ipni/xedni"
 	"github.com/libp2p/go-libp2p"
 	"github.com/libp2p/go-libp2p/core/host"
@@ -86,6 +87,13 @@ func daemonAction(cctx *cli.Context) error {
 		}
 		return err
 	}
+
+	shutdownTelemetry, err := telemetry.SetupTelemetry(cfg.Telemetry)
+	if err != nil {
+		return fmt.Errorf("setting up telemetry: %w", err)
+	}
+	defer shutdownTelemetry()
+	log.Info("Telemetry initialized")
 
 	err = setLoggingConfig(cfg.Logging)
 	if err != nil {

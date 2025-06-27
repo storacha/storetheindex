@@ -1,6 +1,12 @@
 <%
 PREFIX="${TF_WORKSPACE}-${TF_VAR_app}"
 
+if [ "$TF_WORKSPACE" == "prod" ]; then
+  BASE_TRACE_SAMPLE_RATIO="0.0001"
+else
+  BASE_TRACE_SAMPLE_RATIO="1.0"
+fi
+
 ! IFS='' read -r -d '' Config <<EOC
 {
   "Version": 2,
@@ -88,7 +94,13 @@ PREFIX="${TF_WORKSPACE}-${TF_VAR_app}"
   },
   "Peering": {
     "Peers": null
-  }
+  },
+  "Telemetry": {
+    "ServiceName": "$PREFIX",
+    "ExporterEndpoint": "https://api.honeycomb.io:443",
+    "ExporterHeaders": "x-honeycomb-team=$HONEYCOMB_API_KEY",
+    "SamplerRatio": $BASE_TRACE_SAMPLE_RATIO
+  },
 }
 EOC
 

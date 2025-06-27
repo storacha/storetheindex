@@ -14,6 +14,7 @@ import (
 	"github.com/ipni/storetheindex/internal/httpserver"
 	"github.com/ipni/storetheindex/internal/ingest"
 	"github.com/ipni/storetheindex/internal/registry"
+	"github.com/ipni/storetheindex/telemetry"
 )
 
 var log = logging.Logger("indexer/ingest")
@@ -61,7 +62,7 @@ func New(listen string, indexer indexer.Interface, ingester *ingest.Ingester, re
 		s.healthMsg += " " + opts.version
 	}
 
-	mux.HandleFunc("/announce", s.putAnnounce)
+	mux.HandleFunc("/announce", telemetry.InstrumentHTTPHandler(s.putAnnounce, "announce"))
 	mux.HandleFunc("/health", s.getHealth)
 	mux.HandleFunc("/register", s.postRegisterProvider)
 

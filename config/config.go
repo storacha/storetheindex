@@ -27,6 +27,7 @@ type Config struct {
 	Ingest         Ingest         // ingestion related configuration.
 	Logging        Logging        // logging configuration.
 	Peering        Peering        // peering service configuration.
+	Telemetry      Telemetry      // telemetry configutation.
 }
 
 const (
@@ -140,6 +141,7 @@ func Load(filePath string) (*Config, error) {
 		Ingest:         NewIngest(),
 		Logging:        NewLogging(),
 		Peering:        NewPeering(),
+		Telemetry:      NewTelemetry(),
 	}
 
 	if err = json.NewDecoder(cfgReader).Decode(&cfg); err != nil {
