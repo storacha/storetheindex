@@ -100,7 +100,7 @@ fi
     "ExporterEndpoint": "https://api.honeycomb.io:443",
     "ExporterHeaders": "x-honeycomb-team=$HONEYCOMB_API_KEY",
     "SamplerRatio": $BASE_TRACE_SAMPLE_RATIO
-  },
+  }
 }
 EOC
 
