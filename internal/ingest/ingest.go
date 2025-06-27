@@ -450,6 +450,7 @@ func (ing *Ingester) Sync(ctx context.Context, peerInfo peer.AddrInfo, depth int
 	c, err := ing.sub.SyncAdChain(syncCtx, peerInfo, opts...)
 	if err != nil {
 		ing.reg.SetLastError(peerInfo.ID, err)
+		telemetry.Error(s, err, "sync failed")
 		return cid.Undef, fmt.Errorf("failed to sync: %w", err)
 	}
 	// Do not persist the latest sync here, because that is done after

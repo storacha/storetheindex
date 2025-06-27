@@ -18,17 +18,17 @@ import (
 // SetupTelemetry configures OpenTelemetry via passed config or environment variables.
 //
 // https://docs.honeycomb.io/send-data/go/opentelemetry-sdk/#configure-environment-variables
-func SetupTelemetry(cfg *config.Config) (func(), error) {
+func SetupTelemetry(cfg config.Telemetry) (func(), error) {
 	var opts []otelconfig.Option
-	if cfg.OTELServiceName != "" {
-		opts = append(opts, otelconfig.WithServiceName(cfg.OTELServiceName))
+	if cfg.ServiceName != "" {
+		opts = append(opts, otelconfig.WithServiceName(cfg.ServiceName))
 	}
-	if cfg.OTELExporterEndpoint != "" {
-		opts = append(opts, otelconfig.WithServiceName(cfg.OTELExporterEndpoint))
+	if cfg.ExporterEndpoint != "" {
+		opts = append(opts, otelconfig.WithExporterEndpoint(cfg.ExporterEndpoint))
 	}
-	if cfg.OTELExporterHeaders != "" {
+	if cfg.ExporterHeaders != "" {
 		headers := map[string]string{}
-		for h := range strings.SplitSeq(cfg.OTELExporterHeaders, ",") {
+		for h := range strings.SplitSeq(cfg.ExporterHeaders, ",") {
 			kv := strings.Split(h, "=")
 			if len(kv) < 2 {
 				continue
@@ -37,8 +37,8 @@ func SetupTelemetry(cfg *config.Config) (func(), error) {
 		}
 		opts = append(opts, otelconfig.WithHeaders(headers))
 	}
-	if cfg.OTELSamplerRatio != 0 {
-		opts = append(opts, otelconfig.WithSampler(sdktrace.TraceIDRatioBased(cfg.OTELSamplerRatio)))
+	if cfg.SamplerRatio != 0 {
+		opts = append(opts, otelconfig.WithSampler(sdktrace.TraceIDRatioBased(cfg.SamplerRatio)))
 	}
 	return otelconfig.ConfigureOpenTelemetry(opts...)
 }
