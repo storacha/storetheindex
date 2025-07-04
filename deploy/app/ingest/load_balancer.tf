@@ -23,21 +23,25 @@ resource "aws_lb_target_group" "green" {
 }
 
 resource "aws_lb_listener_rule" "announce" {
- listener_arn = var.lb_listener.arn
- priority     = 10
+  listener_arn = var.lb_listener.arn
+  priority     = 10
 
- action {
-   type             = "forward"
-   target_group_arn = aws_lb_target_group.blue.arn
- }
+  condition {
+    path_pattern {
+      values = ["/announce*"]
+    }
+  }
 
- condition {
-   path_pattern {
-     values = ["/announce*"]
-   }
- }
+  action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.blue.arn
+  }
 
- tags = {
-   "Name" = "announce-to-ingest-service"
- }
+  lifecycle {
+    ignore_changes = [action]
+  }
+
+  tags = {
+    Name = "announce-to-ingest-service"
+  }
 }
