@@ -22,8 +22,24 @@ provider "aws" {
   region = "us-west-2"
   default_tags {
     tags = {
-      "Environment" = terraform.workspace
-      "ManagedBy"   = "OpenTofu"
+      Environment   = "shared"
+      ManagedBy     = "OpenTofu"
+      Owner         = "storacha"
+      Team          = "Storacha Engineering"
+      Organization  = "Storacha"
+      Project       = "${var.app}"
+    }
+  }
+}
+
+provider "aws" {
+  alias = "dev"
+  allowed_account_ids = [var.allowed_account_id]
+  region = "us-east-2"
+  default_tags {
+    tags = {
+      Environment   = "dev"
+      ManagedBy     = "OpenTofu"
       Owner         = "storacha"
       Team          = "Storacha Engineering"
       Organization  = "Storacha"
@@ -33,11 +49,16 @@ provider "aws" {
 }
 
 module "shared" {
-  source = "github.com/storacha/storoku//shared?ref=v0.2.44"
+  source = "github.com/storacha/storoku//shared?ref=v0.5.0"
+  providers = {
+    aws = aws
+    aws.dev = aws.dev
+  }
   create_db = false
   caches = []
-  networks = ["warm",]
+  networks = ["warm","forge",]
   app = var.app
+  create_shared_dev_resources = var.create_shared_dev_resources
   zone_id = var.cloudflare_zone_id
   domain_base = var.domain_base
   setup_cloudflare = true

@@ -1,7 +1,7 @@
 <%
 PREFIX="${TF_WORKSPACE}-${TF_VAR_app}"
 
-if [ "$TF_WORKSPACE" == "prod" ]; then
+if [ "$TF_WORKSPACE" == "prod" || "$TF_WORKSPACE" == "forge-prod" ]; then
   BASE_TRACE_SAMPLE_RATIO="0.0001"
 else
   BASE_TRACE_SAMPLE_RATIO="1.0"
