@@ -22,7 +22,6 @@ provider "aws" {
   allowed_account_ids = [var.allowed_account_id]
   region = var.region
   default_tags {
-    
     tags = {
       "Environment" = terraform.workspace
       "ManagedBy"   = "OpenTofu"
@@ -41,7 +40,7 @@ provider "aws" {
 }
 
 module "app" {
-  source = "github.com/storacha/storoku//app?ref=v0.2.44"
+  source = "github.com/storacha/storoku//app?ref=v0.5.0"
   private_key = var.private_key
   private_key_env_var = "STORETHEINDEX_PRIV_KEY"
   httpport = 3000
