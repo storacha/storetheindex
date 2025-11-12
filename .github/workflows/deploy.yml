@@ -13,6 +13,13 @@ on:
     types: [completed]
     branches: [main]
   workflow_dispatch:
+    inputs:
+      environment:
+        type: choice
+        description: Environment
+        options:
+          - production
+          - forge-production
 
 permissions:
   id-token: write # This is required for requesting the JWT
@@ -60,7 +67,7 @@ jobs:
       env: production
       workspace: prod
       did: did:web:ipni.storacha.network
-      apply: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' }}
+      apply: ${{ (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success') || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'production') }}
     secrets:
       aws-account-id: ${{ secrets.PROD_AWS_ACCOUNT_ID }}
       aws-region: ${{ secrets.PROD_AWS_REGION }}
@@ -77,7 +84,7 @@ jobs:
       workspace: forge-prod
       network: forge
       did: did:web:ipni.forge.storacha.network
-      apply: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' }}
+      apply: ${{ (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success') || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'forge-production') }}
     secrets:
       aws-account-id: ${{ secrets.FORGE_PROD_AWS_ACCOUNT_ID }}
       aws-region: ${{ secrets.FORGE_PROD_AWS_REGION }}
