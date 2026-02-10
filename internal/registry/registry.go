@@ -51,7 +51,7 @@ type Registry struct {
 	filterIPs bool
 	freezer   *freeze.Freezer
 	maxPoll   int
-	provMutex sync.Mutex
+	provMutex sync.RWMutex
 	pollDone  chan struct{}
 	providers map[peer.ID]*ProviderInfo
 	sequences *sequences
@@ -843,17 +843,17 @@ func (r *Registry) register(ctx context.Context, info *ProviderInfo) error {
 
 // IsRegistered checks if the provider is in the registry
 func (r *Registry) IsRegistered(providerID peer.ID) bool {
-	r.provMutex.Lock()
+	r.provMutex.RLock()
 	_, found := r.providers[providerID]
-	r.provMutex.Unlock()
+	r.provMutex.RUnlock()
 	return found
 }
 
 // ProviderInfo returns information for a registered provider.
 func (r *Registry) ProviderInfo(providerID peer.ID) (*ProviderInfo, bool) {
-	r.provMutex.Lock()
+	r.provMutex.RLock()
 	pinfo, ok := r.providers[providerID]
-	r.provMutex.Unlock()
+	r.provMutex.RUnlock()
 	if !ok {
 		return nil, false
 	}
@@ -863,7 +863,7 @@ func (r *Registry) ProviderInfo(providerID peer.ID) (*ProviderInfo, bool) {
 // AllProviderInfo returns information for all registered providers that are
 // active and allowed.
 func (r *Registry) AllProviderInfo() []*ProviderInfo {
-	r.provMutex.Lock()
+	r.provMutex.RLock()
 	infos := make([]*ProviderInfo, 0, len(r.providers))
 	for _, info := range r.providers {
 		if r.assigned != nil {
@@ -878,7 +878,7 @@ func (r *Registry) AllProviderInfo() []*ProviderInfo {
 		}
 		infos = append(infos, info)
 	}
-	r.provMutex.Unlock()
+	r.provMutex.RUnlock()
 
 	// Stats tracks the number of active, allowed providers.
 	stats.Record(context.Background(), metrics.ProviderCount.M(int64(len(infos))))
@@ -1055,8 +1055,8 @@ func (r *Registry) RemoveProvider(ctx context.Context, providerID peer.ID) error
 }
 
 func (r *Registry) ProviderByPublisher(pubID peer.ID) (peer.ID, bool) {
-	r.provMutex.Lock()
-	defer r.provMutex.Unlock()
+	r.provMutex.RLock()
+	defer r.provMutex.RUnlock()
 
 	pinfo, ok := r.providers[pubID]
 	if ok && pinfo.Publisher == pubID {
