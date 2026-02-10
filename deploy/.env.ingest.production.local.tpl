@@ -75,7 +75,7 @@ fi
   "Ingest": {
     "AdvertisementDepthLimit": 33554432,
     "EntriesDepthLimit": 65536,
-    "HttpSyncRetryMax": 0,
+    "HttpSyncRetryMax": 3,
     "HttpSyncRetryWaitMax": "30s",
     "HttpSyncRetryWaitMin": "1s",
     "HttpSyncTimeout": "10s",
