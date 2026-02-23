@@ -83,7 +83,7 @@ fi
     "PubSubTopic": "/indexer/ingest/mainnet",
     "ResendDirectAnnounce": false,
     "SyncSegmentDepthLimit": 2000,
-    "SyncTimeout": "2h0m0s"
+    "SyncTimeout": "24h0m0s"
   },
   "Logging": {
     "Level": "info",
