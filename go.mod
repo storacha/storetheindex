@@ -2,6 +2,9 @@ module github.com/ipni/storetheindex
 
 go 1.24
 
+// https://github.com/storacha/go-libipni/pull/1
+replace github.com/ipni/go-libipni => github.com/storacha/go-libipni v0.0.0-20260304165646-b1abab661335
+
 require (
 	contrib.go.opencensus.io/exporter/prometheus v0.4.2
 	github.com/aws/aws-sdk-go v1.55.7
