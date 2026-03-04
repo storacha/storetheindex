@@ -472,8 +472,6 @@ github.com/ipld/go-ipld-prime/storage/dsadapter v0.0.0-20230102063945-1a409dc236
 github.com/ipld/go-ipld-prime/storage/dsadapter v0.0.0-20230102063945-1a409dc236dd/go.mod h1:9DD/GM0JNPoisgR09F62kbBi7kHa4eDIea4XshXYOVc=
 github.com/ipni/go-indexer-core v0.8.22 h1:v+aIC1Zx+5PbisC3rd5SyqZvEWmjbU7AdEnDKazAZO4=
 github.com/ipni/go-indexer-core v0.8.22/go.mod h1:OdV+M1X9KCES6qbi0EYWYBsCk+1dAkShtxzlsmqlUjY=
-github.com/ipni/go-libipni v0.6.16 h1:MAM8DeMITgZjq8gxUnbTYMXQ6ps+8jvERsHllM5A70U=
-github.com/ipni/go-libipni v0.6.16/go.mod h1:RZMcl81XNFSlENhU0D7BMunG3hr6cR/vnTlinUFTw6E=
 github.com/ipni/xedni v0.0.1 h1:U61WHuHzqkJfgP8q2ULoApOb94NDMg83vCbv69F2RXU=
 github.com/ipni/xedni v0.0.1/go.mod h1:uDP4JANAjbmZ4YXgCCY6o+F5xGVAG27cHo6Rgt0uf60=
 github.com/jackpal/go-nat-pmp v1.0.2 h1:KzKSgb7qkJvOUTqYl9/Hg/me3pWgBmERKrTGD7BdWus=
@@ -847,6 +845,8 @@ github.com/spf13/cobra v1.2.1/go.mod h1:ExllRjgxM/piMAM+3tAZvg8fsklGAf3tPfi+i8t6
 github.com/spf13/jwalterweatherman v1.1.0/go.mod h1:aNWZUN0dPAAO/Ljvb5BEdw96iTZ0EXowPYD95IqWIGo=
 github.com/spf13/pflag v1.0.5/go.mod h1:McXfInJRrz4CZXVZOBLb0bTZqETkiAhM9Iw0y3An2Bg=
 github.com/spf13/viper v1.8.1/go.mod h1:o0Pch8wJ9BVSWGQMbra6iw0oQ5oktSIBaujf1rJH9Ns=
+github.com/storacha/go-libipni v0.0.0-20260304165646-b1abab661335 h1:1FVKm+46Xejm3rG+SydNkpINZMta90SreI4lfdR5svE=
+github.com/storacha/go-libipni v0.0.0-20260304165646-b1abab661335/go.mod h1:RZMcl81XNFSlENhU0D7BMunG3hr6cR/vnTlinUFTw6E=
 github.com/storacha/go-libstoracha v0.0.5 h1:p9+bRGtpNUn2GhZj0JBN7xz7+H7Kh8iEXGKQg+84aHg=
 github.com/storacha/go-libstoracha v0.0.5/go.mod h1:wqPxkkWLincRFGIQDqYU0XwDoUM6tWyuivJGfl2b/vU=
 github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
