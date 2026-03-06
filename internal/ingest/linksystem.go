@@ -199,6 +199,15 @@ func (ing *Ingester) ingestAd(ctx context.Context, publisherID peer.ID, adCid ci
 			publisher = peerStore.PeerInfo(publisherID)
 		}
 	}
+	if len(publisher.Addrs) == 0 {
+		// Fall back to the publisher address persisted in the registry. This
+		// handles the case where in-memory peerstore TTLs have expired during
+		// a long ingestion run (ad ingestion can take much longer than the TTL
+		// when there is a large backlog of advertisements to process).
+		if pinfo, ok := ing.reg.ProviderInfo(providerID); ok && pinfo.PublisherAddr != nil {
+			publisher.Addrs = []multiaddr.Multiaddr{pinfo.PublisherAddr}
+		}
+	}
 
 	var extendedProviders *registry.ExtendedProviders
 	if ad.ExtendedProvider != nil {
