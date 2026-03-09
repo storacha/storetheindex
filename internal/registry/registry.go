@@ -1089,14 +1089,23 @@ func (r *Registry) SetLastError(providerID peer.ID, err error) {
 	var errMsg string
 	if err != nil {
 		errMsg = err.Error()
-	} else if pinfo.LastError == "" {
-		// Last error is also empty; nothing to update.
+	}
+
+	// Only persist if the error message actually changed to avoid redundant
+	// datastore writes when the same error recurs on every ingest cycle.
+	// This also covers the case where both are empty (nothing to update).
+	if errMsg == pinfo.LastError {
 		return
 	}
+
 	pinfoCpy := *pinfo
 	pinfoCpy.LastError = errMsg
 	pinfoCpy.LastErrorTime = now
 	r.providers[providerID] = &pinfoCpy
+
+	if persistErr := r.syncPersistProvider(context.Background(), &pinfoCpy); persistErr != nil {
+		log.Errorw("Failed to persist provider last error", "provider", providerID, "err", persistErr)
+	}
 }
 
 // SetMaxPoll sets the maximum number of providers to poll at each polling retry.
