@@ -4,7 +4,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = ">= 5.86.0"
+      version = ">= 6.0.0"
     }
     archive = {
       source = "hashicorp/archive"
@@ -33,14 +33,9 @@ provider "aws" {
   }
 }
 
-# CloudFront is a global service. Certs must be created in us-east-1, where the core ACM infra lives
-provider "aws" {
-  region = "us-east-1"
-  alias = "acm"
-}
 
 module "app" {
-  source = "github.com/storacha/storoku//app?ref=v0.5.0_co"
+  source = "github.com/storacha/storoku//app?ref=v0.6.2"
   private_key = var.private_key
   private_key_env_var = "STORETHEINDEX_PRIV_KEY"
   httpport = 3000
@@ -60,6 +55,8 @@ module "app" {
   # enter secret values your app will use here -- these will be available
   # as env vars in the container at runtime
   secrets = {}
+  # enter external secrets (provisioned out-of-band) here
+  external_secrets = []
   # enter any sqs queues you want to create here
   queues = []
   caches = []
@@ -106,10 +103,6 @@ module "app" {
       public = false
     },
   ]
-  providers = {
-    aws = aws
-    aws.acm = aws.acm
-  }
   env_files = var.env_files
   domain_base = var.domain_base
 }
