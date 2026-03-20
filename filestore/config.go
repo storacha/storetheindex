@@ -3,6 +3,8 @@ package filestore
 import (
 	"errors"
 	"fmt"
+
+	"github.com/aws/aws-sdk-go-v2/aws"
 )
 
 // Config configures a particular file store implementation.
@@ -44,6 +46,7 @@ func MakeFilestore(cfg Config) (Interface, error) {
 			WithEndpoint(cfg.S3.Endpoint),
 			WithRegion(cfg.S3.Region),
 			WithKeys(cfg.S3.AccessKey, cfg.S3.SecretKey),
+			WithRetryMode(aws.RetryModeStandard),
 		)
 	case "":
 		return nil, errors.New("storage type not defined")
