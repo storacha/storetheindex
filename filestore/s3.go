@@ -58,6 +58,10 @@ func NewS3(bucketName string, options ...S3Option) (*S3, error) {
 		cfgOpts = append(cfgOpts, awsconfig.WithCredentialsProvider(staticCreds))
 	}
 
+	if opts.retryMode != "" {
+		cfgOpts = append(cfgOpts, awsconfig.WithRetryMode(opts.retryMode))
+	}
+
 	awscfg, err := awsconfig.LoadDefaultConfig(context.Background(), cfgOpts...)
 	if err != nil {
 		return nil, err

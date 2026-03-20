@@ -2,6 +2,8 @@ package filestore
 
 import (
 	"fmt"
+
+	"github.com/aws/aws-sdk-go-v2/aws"
 )
 
 type s3Config struct {
@@ -9,6 +11,7 @@ type s3Config struct {
 	region    string
 	accessKey string
 	secretKey string
+	retryMode aws.RetryMode
 }
 
 type S3Option func(*s3Config) error
@@ -41,6 +44,13 @@ func WithKeys(accessKey, secretKey string) S3Option {
 	return func(c *s3Config) error {
 		c.accessKey = accessKey
 		c.secretKey = secretKey
+		return nil
+	}
+}
+
+func WithRetryMode(mode aws.RetryMode) S3Option {
+	return func(c *s3Config) error {
+		c.retryMode = mode
 		return nil
 	}
 }
